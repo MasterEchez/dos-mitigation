@@ -6,4 +6,10 @@
       shell:  /usr/local/dos-mitigation/common/setup/jitsi_server_setup.sh {{ server_name }}
       become: no
 
-# - import_playbook: "copy_jitsi_cert.yml"
+- name: install jitsi client
+  hosts: client
+  gather_facts: true
+  tasks:
+    - name: run jitsi client setup script
+      shell: /usr/local/dos-mitigation/common/setup/jitsi_client_setup.sh
+      become: no
