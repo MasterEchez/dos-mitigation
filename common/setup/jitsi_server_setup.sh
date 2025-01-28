@@ -1,3 +1,4 @@
+# https://jitsi.github.io/handbook/docs/devops-guide/devops-guide-quickstart/
 # get required packages
 sudo apt update
 sudo apt install apt-transport-https
@@ -22,6 +23,11 @@ sudo ufw allow 5349/tcp
 yes | sudo ufw enable
 
 # install jitsi meet
+# https://github.com/jitsi/jitsi-meet/issues/7879
+# https://stackoverflow.com/questions/48050452/automatically-entering-value-when-dialogue-appears-shell
 server_name=$1
 server_ip=$(/usr/local/dos-mitigation/common/bin/hostname_to_ip $server_name)
-# yes 3rdoption | sudo apt install jitsi-meet
+sudo apt install debconf-utils
+echo "jitsi-videobridge jitsi-videobridge/jvb-hostname string $server_ip" | sudo debconf-set-selections
+echo "jitsi-meet-web-config jitsi-meet/cert-choice select Generate a new self-signed certificate" | sudo debconf-set-selections
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y install jitsi-meet

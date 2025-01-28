@@ -1,7 +1,6 @@
 - name: install jitsi server
   hosts: server
   gather_facts: true
-  # https://jitsi.github.io/handbook/docs/devops-guide/devops-guide-quickstart/
   tasks:
     - name: run jitsi server setup script
       shell:  /usr/local/dos-mitigation/common/setup/jitsi_server_setup.sh {{ server_name }}
