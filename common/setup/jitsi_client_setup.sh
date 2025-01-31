@@ -10,3 +10,4 @@ sudo dpkg -i google-chrome-stable_current_amd64.deb
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 nvm install --lts
 npm install puppeteer
+cp -r /usr/local/dos-mitigation/common/puppeteer/ ./
