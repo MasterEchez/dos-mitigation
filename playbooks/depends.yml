@@ -31,3 +31,4 @@
 #     become: yes
 
 - import_playbook: "quic_setup.yml"
+- import_playbook: "jitsi_setup.yml"

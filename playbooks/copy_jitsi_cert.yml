@@ -1,0 +1,22 @@
+- name: fetch jitsi server certificate
+  hosts: s0
+  gather_facts: true
+  tasks:
+    - name: fetch certificate
+      fetch:
+        src: /var/lib/prosody/auth.172.30.0.13.crt # TODO replace with non-hardcode IP
+        dest: "{{ user_dir }}/"
+        flat: yes
+      ignore_errors: yes
+      become: yes
+
+- name: copy jitsi server certificate to clients
+  hosts: client, attacker
+  gather_facts: true
+  tasks:
+    - name: copy certificate
+      copy:
+        src: "{{ user_dir }}/auth.172.30.0.13.crt" # TODO replace with non-hardcode IP
+        dest: "{{ user_dir }}/"
+        mode: preserve
+      become: yes
