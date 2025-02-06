@@ -5,6 +5,9 @@
     - name: run jitsi server setup script
       shell:  /usr/local/dos-mitigation/common/setup/jitsi_server_setup.sh {{ server_name }}
       become: no
+    - name: restart jitsi
+      shell:  /usr/local/dos-mitigation/common/jitsi/restarter.sh
+      become: yes
 
 - name: install jitsi client
   hosts: client
