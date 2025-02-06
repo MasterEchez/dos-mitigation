@@ -13,4 +13,6 @@
     - name: run jitsi client setup script
       shell: /usr/local/dos-mitigation/common/setup/jitsi_client_setup.sh
       become: no
-      ignore_errors: yes
+    - name: run jitsi client setup script (part 2)
+      shell: /usr/local/dos-mitigation/common/setup/jitsi_client_setup_part2.sh
+      become: no
