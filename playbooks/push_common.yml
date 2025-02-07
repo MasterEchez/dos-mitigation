@@ -7,3 +7,10 @@
       dest: "{{ user_dir }}/"
       mode: preserve
     become: yes
+
+- hosts: client
+  name: copy puppeteer scripts to home
+  tasks:
+  - name: copy puppeteer scripts to home
+    shell: cp -r {{ user_dir }}/common/puppeteer/ ./
+    become: no
