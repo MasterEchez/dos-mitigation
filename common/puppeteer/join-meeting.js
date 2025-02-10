@@ -26,6 +26,14 @@ const [ clientName ] = process.argv.slice(2);
     bodyHTML = await page.evaluate(() => document.body.innerHTML);
     await page.type('#premeeting-name-input', clientName);
     await page.screenshot({path: 'meeting.png', fullPage: true});
+    // console.log(bodyHTML);
+    
+    await Promise.all([
+        page.click('.primary'),
+        new Promise(resolve => setTimeout(resolve, 3000)),
+    ]);
+    bodyHTML = await page.evaluate(() => document.body.innerHTML);
+    await page.screenshot({path: 'in-meeting.png', fullPage: true});
     console.log(bodyHTML);
 
     await browser.close();
