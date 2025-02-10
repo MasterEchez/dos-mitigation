@@ -10,20 +10,8 @@ const [ clientName ] = process.argv.slice(2);
     });
     const page = await browser.newPage();
 
-    await page.goto('https://s0');
+    await page.goto('https://s0/dos-miti');
     let bodyHTML = await page.evaluate(() => document.body.innerHTML);
-    await page.screenshot({path: 'home.png', fullPage: true});
-    // console.log(bodyHTML);
-    await page.type('#enter_room_field', 'dos-miti');
-
-    await Promise.all([
-        page.waitForNavigation(),
-        page.click('#enter_room_button'),
-    ]);
-
-    console.log('New Page URL:', page.url());
-
-    bodyHTML = await page.evaluate(() => document.body.innerHTML);
     await page.type('#premeeting-name-input', clientName);
     await page.screenshot({path: 'meeting.png', fullPage: true});
     // console.log(bodyHTML);
