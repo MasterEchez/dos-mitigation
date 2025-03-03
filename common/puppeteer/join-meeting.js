@@ -18,7 +18,7 @@ const [ clientName ] = process.argv.slice(2);
         // test pattern
         '--use-fake-device-for-media-stream',
         // file for capture
-        // '--use-file-for-fake-video-capture=""',
+        '--use-file-for-fake-video-capture=./bigbuckbunny.mjpeg',
         //  You may need to play with these options to get proper input and output
         //'--alsa-output-device=plug:hw:0,1'
         '--alsa-input-device=plug:hw:0',
