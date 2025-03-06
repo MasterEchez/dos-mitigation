@@ -46,9 +46,11 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         ];
 
         const page = await browser.newPage();
+        const recorder = new PuppeteerScreenRecorder(page);
+        await recorder.start("join-meeting.mov");
 
         await page.goto(`https://s0/dos-miti#${meetArgs.join('&')}`);
-        let bodyHTML = await page.evaluate(() => document.body.innerHTML);
+        // let bodyHTML = await page.evaluate(() => document.body.innerHTML);
         await page.type('#premeeting-name-input', clientName);
         // await page.screenshot({path: 'meeting.png', fullPage: true});
         
@@ -64,7 +66,8 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
             document.querySelector('[aria-label="Jitsi Meet Logo, links to  Homepage"]').style.display = "none";
         });
         await new Promise(resolve => setTimeout(resolve, 5000));
-        await page.screenshot({path: 'in-meeting.png', fullPage: true});
+        await recorder.stop();
+        // await page.screenshot({path: 'in-meeting.png', fullPage: true});
         // bodyHTML = await page.evaluate(() => document.body.innerHTML);
         // console.log(bodyHTML);
     } catch (e) {
