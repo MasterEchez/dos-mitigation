@@ -58,6 +58,10 @@ const [ clientName ] = process.argv.slice(2);
         new Promise(resolve => setTimeout(resolve, 2000)),
     ]);
     
+    await page.evaluate(() => {
+        document.getElementById("remoteVideos").style.display = "none";
+        document.querySelector('[aria-label="Jitsi Meet Logo, links to  Homepage"]').style.display = "none";
+    });
     await new Promise(resolve => setTimeout(resolve, 5000));
     await page.screenshot({path: 'in-meeting.png', fullPage: true});
     // bodyHTML = await page.evaluate(() => document.body.innerHTML);
