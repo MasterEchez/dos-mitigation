@@ -13,3 +13,4 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 nvm install --lts
 npm install puppeteer
+npm install puppeteer-screen-recorder --legacy-peer-deps # creator removed >=puppeteer@19.0.0 per dep for some reason
