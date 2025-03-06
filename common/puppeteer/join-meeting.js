@@ -36,6 +36,8 @@ const [ clientName ] = process.argv.slice(2);
         'config.p2p.enabled=false',
         // Disable prejoin page
         // 'config.prejoinPageEnabled=false'
+        // Disable self view (will also get rid of main video)
+        // 'config.disableSelfView=true',
     ];
 
     const browser = await puppeteer.launch({
@@ -53,10 +55,12 @@ const [ clientName ] = process.argv.slice(2);
     
     await Promise.all([
         page.click('.primary'),
-        new Promise(resolve => setTimeout(resolve, 3000)),
+        new Promise(resolve => setTimeout(resolve, 2000)),
     ]);
-    bodyHTML = await page.evaluate(() => document.body.innerHTML);
+    
+    await new Promise(resolve => setTimeout(resolve, 5000));
     await page.screenshot({path: 'in-meeting.png', fullPage: true});
+    // bodyHTML = await page.evaluate(() => document.body.innerHTML);
     // console.log(bodyHTML);
 
     await browser.close();
