@@ -43,11 +43,12 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
             // 'config.prejoinPageEnabled=false'
             // Disable self view (will also get rid of main video)
             // 'config.disableSelfView=true',
+            'config.doNotFlipLocalVideo=true',
         ];
 
         const page = await browser.newPage();
         const recorder = new PuppeteerScreenRecorder(page);
-        await recorder.start("join-meeting.mov");
+        await recorder.start("join-meeting.mp4");
 
         await page.goto(`https://s0/dos-miti#${meetArgs.join('&')}`);
         // let bodyHTML = await page.evaluate(() => document.body.innerHTML);
