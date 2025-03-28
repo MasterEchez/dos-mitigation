@@ -16,7 +16,7 @@ STAMPED="fourpeoplestamped.mjpeg"
 mkdir -p $QR_IMAGE_DIRECTORY $RAW_FRAME_DIRECTORY $STAMPED_FRAME_DIRECTORY
 
 # download and convert to 30fps + split
-# curl -s https://media.xiph.org/video/derf/y4m/FourPeople_1280x720_60.y4m -o $FOUR_PEOPLE_Y4M
+curl -s https://media.xiph.org/video/derf/y4m/FourPeople_1280x720_60.y4m -o $FOUR_PEOPLE_Y4M
 
 # split into images
 RAW_FRAME_FILES_COUNT=$(ls -1 $RAW_FRAME_DIRECTORY/*.png | wc -l | tr -d '[ ]')
