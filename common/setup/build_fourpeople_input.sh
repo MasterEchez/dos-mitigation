@@ -1,3 +1,5 @@
+# https://github.com/jitsi/jitsi-meet-torture/blob/master/scripts/psnr-build-resources.sh
+
 FOUR_PEOPLE_Y4M="fourpeople.y4m"
 FOUR_PEOPLE_MJPEG="fourpeople.mjpeg"
 
@@ -36,5 +38,7 @@ then
         ffmpeg -nostats -loglevel 0 -i $RAW_FRAME_FILE -i $QR_IMAGE_FILE -filter_complex overlay=10:10 $STAMPED_FRAME_FILE
     done
 fi
+
+ffmpeg -f image2 -framerate $VIDEO_FPS -i $STAMPED_FRAME_DIRECTORY/%03d.png -s $VIDEO_SZ -f yuv4mpegpipe -pix_fmt yuv420p $STAMPED
 
 # rm -rf $QR_IMAGE_DIRECTORY $RAW_FRAME_DIRECTORY $STAMPED_FRAME_DIRECTORY
