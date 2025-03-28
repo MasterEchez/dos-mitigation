@@ -174,3 +174,9 @@ parameters.json
 .venv
 data
 figures
+
+#videos
+*.mjpeg
+*.mov
+*.y4m
+*.mp4
