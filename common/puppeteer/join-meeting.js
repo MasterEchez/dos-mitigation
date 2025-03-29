@@ -2,7 +2,7 @@
 
 const puppeteer = require('puppeteer');
 const process = require('process');
-const [ clientName ] = process.argv.slice(2);
+const [ clientName, videoFilepath ] = process.argv.slice(2);
 const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
 (async () => {
@@ -18,7 +18,7 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         // test pattern
         '--use-fake-device-for-media-stream',
         // file for capture
-        '--use-file-for-fake-video-capture=./bigbuckbunny.mjpeg',
+        `--use-file-for-fake-video-capture=${videoFilepath}`,
         //  You may need to play with these options to get proper input and output
         //'--alsa-output-device=plug:hw:0,1'
         '--alsa-input-device=plug:hw:0',
