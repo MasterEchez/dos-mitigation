@@ -39,6 +39,6 @@ then
     done
 fi
 
-ffmpeg -f image2 -framerate $VIDEO_FPS -i $STAMPED_FRAME_DIRECTORY/%03d.png -s $VIDEO_SZ -f yuv4mpegpipe -pix_fmt yuv420p $STAMPED
+ffmpeg -nostats -loglevel 0 -f image2 -framerate $VIDEO_FPS -i $STAMPED_FRAME_DIRECTORY/%03d.png -s $VIDEO_SZ -f yuv4mpegpipe -pix_fmt yuv420p $STAMPED
 
 # rm -rf $QR_IMAGE_DIRECTORY $RAW_FRAME_DIRECTORY $STAMPED_FRAME_DIRECTORY
