@@ -10,7 +10,7 @@ STAMPED_FRAME_DIRECTORY="stamped_frames"
 VIDEO_SZ=1280x720
 VIDEO_FPS=30
 
-STAMPED="fourpeoplestamped.mjpeg"
+STAMPED="fourpeoplestamped.y4m"
 
 # setup directories
 mkdir -p $QR_IMAGE_DIRECTORY $RAW_FRAME_DIRECTORY $STAMPED_FRAME_DIRECTORY
