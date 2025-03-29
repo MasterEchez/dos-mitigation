@@ -180,3 +180,6 @@ figures
 *.mov
 *.y4m
 *.mp4
+raw_frames/
+qrcodes/
+stamped_frames/
