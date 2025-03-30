@@ -46,12 +46,13 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
             'config.doNotFlipLocalVideo=true',
         ];
 
+        let bodyHTML;
         const page = await browser.newPage();
         const recorder = new PuppeteerScreenRecorder(page);
         await recorder.start("join-meeting.mp4");
 
         await page.goto(`https://s0/dos-miti#${meetArgs.join('&')}`);
-        // let bodyHTML = await page.evaluate(() => document.body.innerHTML);
+        // bodyHTML = await page.evaluate(() => document.body.innerHTML);
         await page.type('#premeeting-name-input', clientName);
         // await page.screenshot({path: 'meeting.png', fullPage: true});
         
