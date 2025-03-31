@@ -2,6 +2,9 @@
 
 const puppeteer = require('puppeteer');
 const process = require('process');
+const fs = require('fs/promises');
+
+// clientName = clientName on jitsi, videoFilePath = file used to stream vid
 const [ clientName, videoFilepath ] = process.argv.slice(2);
 const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
@@ -49,7 +52,7 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         let bodyHTML;
         const page = await browser.newPage();
         const recorder = new PuppeteerScreenRecorder(page);
-        await recorder.start("join-meeting.mp4");
+        // await recorder.start("join-meeting.mp4");
 
         await page.goto(`https://s0/dos-miti#${meetArgs.join('&')}`);
         // bodyHTML = await page.evaluate(() => document.body.innerHTML);
@@ -61,14 +64,49 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         await Promise.all([
             page.click('.primary'),
             new Promise(resolve => setTimeout(resolve, 2000)),
+            // await page.waitForSelector('video', { timeout: 10000 });
         ]);
         
-        await page.evaluate(() => {
-            document.getElementById("remoteVideos").style.display = "none";
-            document.querySelector('[aria-label="Jitsi Meet Logo, links to  Homepage"]').style.display = "none";
-        });
+        // await page.evaluate(() => {
+        //     document.getElementById("remoteVideos").style.display = "none";
+        //     document.querySelector('[aria-label="Jitsi Meet Logo, links to  Homepage"]').style.display = "none";
+        // });
         await new Promise(resolve => setTimeout(resolve, 5000));
-        await recorder.stop();
+
+        // const video = document.getElementById('largeVideo');
+        // const canvas = document.createElement('canvas');
+        // canvas.width = video.videoWidth;
+        // canvas.height = video.videoHeight;
+        // console.log(`width: ${canvas.width}, height: ${canvas.height}`);
+        // const ctx = canvas.getContext('2d');
+        // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // const dataURL = canvas.toDataURL('image/png');
+
+        try {
+            const outputPath = "exampleFrame.png"
+            // Capture the frame as a buffer
+            const screenshotBuffer = await page.screenshot({
+                clip: await page.evaluate(() => {
+                const videoElement = document.getElementById('largeVideo');
+                const rect = videoElement.getBoundingClientRect();
+                return {
+                    x: rect.x,
+                    y: rect.y,
+                    width: rect.width,
+                    height: rect.height,
+                };
+                }),
+            });
+        
+            // Save the buffer to a file
+            await fs.writeFile(outputPath, screenshotBuffer);
+        
+            console.log(`Frame saved to ${outputPath}`);
+        } catch (error) {
+            console.error('Error saving frame:', error);
+        }
+
+        // await recorder.stop();
         // await page.screenshot({path: 'in-meeting.png', fullPage: true});
         // bodyHTML = await page.evaluate(() => document.body.innerHTML);
         // console.log(bodyHTML);
