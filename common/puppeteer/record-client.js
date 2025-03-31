@@ -51,28 +51,15 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
         let bodyHTML;
         const page = await browser.newPage();
-        const recorder = new PuppeteerScreenRecorder(page);
+        // const recorder = new PuppeteerScreenRecorder(page);
         // await recorder.start("join-meeting.mp4");
 
         await page.goto(`https://s0/dos-miti#${meetArgs.join('&')}`);
-        // bodyHTML = await page.evaluate(() => document.body.innerHTML);
         await page.type('#premeeting-name-input', clientName);
-        // await page.screenshot({path: 'meeting.png', fullPage: true});
         
-        // console.log(bodyHTML);
-        
-        await Promise.all([
-            page.click('.primary'),
-            new Promise(resolve => setTimeout(resolve, 2000)),
-            // await page.waitForSelector('video', { timeout: 10000 });
-        ]);
-        
-        // await page.evaluate(() => {
-        //     document.getElementById("remoteVideos").style.display = "none";
-        //     document.querySelector('[aria-label="Jitsi Meet Logo, links to  Homepage"]').style.display = "none";
-        // });
-        await new Promise(resolve => setTimeout(resolve, 5000));
-
+        await page.click('.primary');
+        await page.waitForSelector('#largeVideo', { timeout: 1000 });
+        await page.waitForFunction('document.querySelector("#largeVideo").readyState >= 2');
 
         try {
             const outputPath = "canvasFrame.png"
@@ -99,8 +86,6 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         }
 
         // await recorder.stop();
-        // await page.screenshot({path: 'in-meeting.png', fullPage: true});
-        // bodyHTML = await page.evaluate(() => document.body.innerHTML);
         // console.log(bodyHTML);
     } catch (e) {
         console.log(e);
