@@ -73,34 +73,26 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         // });
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        // const video = document.getElementById('largeVideo');
-        // const canvas = document.createElement('canvas');
-        // canvas.width = video.videoWidth;
-        // canvas.height = video.videoHeight;
-        // console.log(`width: ${canvas.width}, height: ${canvas.height}`);
-        // const ctx = canvas.getContext('2d');
-        // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        // const dataURL = canvas.toDataURL('image/png');
 
         try {
-            const outputPath = "exampleFrame.png"
+            const outputPath = "canvasFrame.png"
             // Capture the frame as a buffer
-            const screenshotBuffer = await page.screenshot({
-                clip: await page.evaluate(() => {
+            const dataUrl = await page.evaluate(() => {
                 const videoElement = document.getElementById('largeVideo');
-                const rect = videoElement.getBoundingClientRect();
-                return {
-                    x: rect.x,
-                    y: rect.y,
-                    width: rect.width,
-                    height: rect.height,
-                };
-                }),
+                // const rect = videoElement.getBoundingClientRect();
+                const canvas = document.createElement('canvas');
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                return canvas.toDataURL('image/png');
             });
-        
-            // Save the buffer to a file
-            await fs.writeFile(outputPath, screenshotBuffer);
-        
+
+            const base64String = dataUrl.split(',')[1];
+            const buffer = Buffer.from(base64String, 'base64');
+
+            fs.writeFile(outputPath, buffer);
+
             console.log(`Frame saved to ${outputPath}`);
         } catch (error) {
             console.error('Error saving frame:', error);
