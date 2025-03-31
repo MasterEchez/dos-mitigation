@@ -1,0 +1,1 @@
+document.getElementById("largeVideo").style.display = "none";
