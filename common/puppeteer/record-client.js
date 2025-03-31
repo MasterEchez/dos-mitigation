@@ -61,30 +61,49 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         await page.waitForSelector('#largeVideo', { timeout: 1000 });
         await page.waitForFunction('document.querySelector("#largeVideo").readyState >= 2');
 
-        try {
-            const outputPath = "canvasFrame.png"
-            // Capture the frame as a buffer
-            const dataUrl = await page.evaluate(() => {
-                const videoElement = document.getElementById('largeVideo');
-                // const rect = videoElement.getBoundingClientRect();
-                const canvas = document.createElement('canvas');
-                canvas.width = videoElement.videoWidth;
-                canvas.height = videoElement.videoHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                return canvas.toDataURL('image/png');
-            });
+        const recordTime = 5000;
+        const frames = [];
+        const timestamps = [];
+        let counter = 0;
 
-            const base64String = dataUrl.split(',')[1];
+        let intervalID = setInterval(async () => {
+            try {
+                counter += 1;
+                // Capture the frame as a buffer
+                timestamps.push(Date.now());
+                const dataUrl = await page.evaluate(() => {
+                    const videoElement = document.getElementById('largeVideo');
+                    // const rect = videoElement.getBoundingClientRect();
+                    const canvas = document.createElement('canvas');
+                    canvas.width = videoElement.videoWidth;
+                    canvas.height = videoElement.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                    return canvas.toDataURL('image/png');
+                });
+    
+                const base64String = dataUrl.split(',')[1];
+                frames.push(base64String);
+
+                // console.log(`Frame added to frames`);
+            } catch (error) {
+                console.error('Error saving frame:', error);
+            }
+        }, 1000 / 30 /* 30 fps video for jitsi */);
+
+
+        await new Promise(resolve => setTimeout(resolve, recordTime));
+        clearInterval(intervalID);
+
+        writeFileMap = frames.map( async (base64String, index) => {
+            const outputPath = `output/${(index+1).toString().padStart(3, '0')}.png`;
             const buffer = Buffer.from(base64String, 'base64');
+            await fs.writeFile(outputPath, buffer);
+            // console.log(`Frame written to ${outputPath}`);
+        });
 
-            fs.writeFile(outputPath, buffer);
-
-            console.log(`Frame saved to ${outputPath}`);
-        } catch (error) {
-            console.error('Error saving frame:', error);
-        }
-
+        await Promise.all(writeFileMap);
+        
         // await recorder.stop();
         // console.log(bodyHTML);
     } catch (e) {
