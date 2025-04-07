@@ -56,16 +56,24 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
         await page.goto(`https://s0/dos-miti#${meetArgs.join('&')}`);
         await page.type('#premeeting-name-input', clientName);
-        await page.exposeFunction('writeFile', (outputPath, buffer) => {
-            return fs.writeFile(outputPath, buffer);
-        });
+        // await page.exposeFunction('writeFile', async (outputPath, buffer) => {
+        //     return fs.writeFile(outputPath, buffer);
+        // });
         
         await page.click('.primary');
         await page.waitForSelector('#largeVideo', { timeout: 1000 });
         await page.waitForFunction('document.querySelector("#largeVideo").readyState >= 2');
 
-        await page.addScriptTag({path: './puppeteer/recordVideo.js'});
-        await page.screenshot({path: 'test.png', fullPage: true});
+        const recordVideoScript = await page.addScriptTag({path: './puppeteer/recordVideo.js'});
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const arr = await recordVideoScript.evaluate(() => frames);
+        // console.log(arr);
+
+        // const outputPath = `output/test.png`;
+        // const buffer = Buffer.from(arr[0], 'base64');
+        // await fs.writeFile(outputPath, buffer);
+
+        // await page.screenshot({path: 'test.png', fullPage: true});
 
         // const recordTime = 5000;
         // const frames = [];
