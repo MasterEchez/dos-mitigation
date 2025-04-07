@@ -65,9 +65,17 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         await page.waitForFunction('document.querySelector("#largeVideo").readyState >= 2');
 
         const recordVideoScript = await page.addScriptTag({path: './puppeteer/recordVideo.js'});
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const arr = await recordVideoScript.evaluate(() => frames);
-        // console.log(arr);
+        await new Promise(resolve => setTimeout(resolve, 8000)); // should use a flag saying it's done
+        const [frames, timestamps] = await recordVideoScript.evaluate(() => [frames, timestamps]);
+
+        const writeFileMap = frames.map( async (base64String, index) => {
+            const outputPath = `output/${(index+1).toString().padStart(3, '0')}.png`;
+            const buffer = Buffer.from(base64String, 'base64');
+            await fs.writeFile(outputPath, buffer);
+            // console.log(`Frame written to ${outputPath}`);
+        });
+
+        await Promise.all(writeFileMap);
 
         // const outputPath = `output/test.png`;
         // const buffer = Buffer.from(arr[0], 'base64');
