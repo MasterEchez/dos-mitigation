@@ -1,8 +1,8 @@
-// const recordTime; 
-// const expStartDateTime;
+// next 2 lines will be added in record-client.js
+// const recordTime = windowLengthNum * 3 * 1000 + 100;
+// const expStartDateTime = new Date("${expStartTime}");
 const frames = [];
 const timestamps = [];
-let counter = 0;
 const startTime = Date.now();
 let finishedRecording = false;
 
@@ -11,7 +11,6 @@ let finishedRecording = false;
 // }
 
 const intervalID = setInterval(() => {
-    counter += 1;
     timestamps.push(Date.now());
     try {
         // Capture the frame as a buffer

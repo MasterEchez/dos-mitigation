@@ -81,14 +81,22 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         //     winLength.innerText = windowLength;
         // }, expStartTime, windowLength);
 
-        let content = `const recordTime = ${windowLengthNum} * 3 * 1000 + 100;\n` +
-            `const expStartDateTime = new Date(${expStartTime})\n`;
-        const recordFramesScript = await page.addScriptTag({path: recordFramesPath, id: scriptId});
+        let content = `const recordTime = ${windowLengthNum} * 3 * 1000 + 100;\n`;
+            // + `const expStartDateTime = new Date("${expStartTime}");\n`;
+        content += await fs.readFile(recordFramesPath, 'utf8');
+        console.log(content);
+        while (new Date() < expStartDateTime) {
+            await new Promise((resolve) => setTimeout(resolve, 20)); // Check every 20 ms
+        }
+        const recordFramesScript = await page.addScriptTag({content, id: scriptId});
+        console.log("script injected");
 
         const endTime = new Date(expStartDateTime.getTime() + 1000 * windowLengthNum * 3 + 10000); // before, during, after, plus buffer
         while (new Date() < endTime) {
             await new Promise((resolve) => setTimeout(resolve, 1000)); // Check every second
+            console.log("waiting");
         }
+        console.log("reached end of time period");
         const [frames, timestamps, finishedRecording] = await recordFramesScript.evaluate(() => [frames, timestamps, finishedRecording]);
         console.log(finishedRecording);
 
