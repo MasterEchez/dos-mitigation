@@ -10,16 +10,16 @@ let finishedRecording = false;
 //     await new Promise((resolve) => setTimeout(resolve, 20)); // Check every 100ms
 // }
 
+const videoElement = document.getElementById('largeVideo');
+const [height, width] = [videoElement.videoWidth, videoElement.videoHeight];
+
 const intervalID = setInterval(() => {
     timestamps.push(Date.now());
     try {
         // Capture the frame as a buffer
-        const videoElement = document.getElementById('largeVideo');
-        const canvas = document.createElement('canvas');
-        canvas.width = videoElement.videoWidth;
-        canvas.height = videoElement.videoHeight;
+        const canvas = document.createElement('canvas', {width, height});
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(videoElement, 0, 0, width, height);
         const dataUrl = canvas.toDataURL('image/png');
         const base64String = dataUrl.split(',')[1];
         frames.push(base64String);
