@@ -20,6 +20,7 @@ const frames = [];
 const timestamps = [];
 let counter = 0;
 const startTime = Date.now();
+let finishedRecording = false;
 
 const intervalID = setInterval(() => {
     counter += 1;
@@ -44,5 +45,7 @@ const intervalID = setInterval(() => {
 
     if (Date.now() - startTime >=  recordTime) {
         clearInterval(intervalID);
+        finishedRecording = true;
+        // some flag?
     }
 }, 1000 / 30 /* 30 fps video for jitsi */);
