@@ -4,8 +4,15 @@ const puppeteer = require('puppeteer');
 const process = require('process');
 const fs = require('fs/promises');
 
-// clientName = clientName on jitsi, videoFilePath = file used to stream vid
-const [ clientName, videoFilepath ] = process.argv.slice(2);
+// clientName = clientName on jitsi
+// clientVideoFilePath = file used to stream vid
+// scenario = UB (unmitigated baseline), MB (mitigated baseline), UA (unmitigated attack), MA (mitigated attack)
+// windowLength = length of pre-attack, during attack, post-attack windows in seconds
+// attackStartTime = linux time stating when attack starts
+const [ clientName, clientVideoFilePath, scenario,
+    windowLength, attackStartTime ] = process.argv.slice(2);
+const windowLengthNum = Number(windowLength);
+const attackStartDateTime = new Date(attackStartTime);
 const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
 (async () => {
@@ -21,7 +28,7 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         // test pattern
         '--use-fake-device-for-media-stream',
         // file for capture
-        `--use-file-for-fake-video-capture=${videoFilepath}`,
+        `--use-file-for-fake-video-capture=${clientVideoFilePath}`,
         //  You may need to play with these options to get proper input and output
         //'--alsa-output-device=plug:hw:0,1'
         '--alsa-input-device=plug:hw:0',
@@ -67,18 +74,33 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         const scriptId = 'recordFrameScript';
 
         const recordFramesScript = await page.addScriptTag({path: './puppeteer/record-frames.js', id: scriptId});
-        await new Promise(resolve => setTimeout(resolve, 8000)); // should use a flag saying it's done
+        await new Promise(resolve => setTimeout(resolve, 1000 * windowLengthNum * 4)); // before, during, after, plus buffer
         const [frames, timestamps, finishedRecording] = await recordFramesScript.evaluate(() => [frames, timestamps, finishedRecording]);
         console.log(finishedRecording);
 
-        const writeFileMap = frames.map( async (base64String, index) => {
-            const outputPath = `output/${(index+1).toString().padStart(3, '0')}.png`;
+        const outputFramesDir = `output/${scenario}/frames`;
+        const outputTimestampsDir = `output/${scenario}/timestamps`;
+        await fs.mkdir(outputFramesDir, {recursive: true});
+        await fs.mkdir(outputTimestampsDir, {recursive: true});
+
+        const writeFilesMap = frames.map( async (base64String, index) => {
+            // write frames to directory
+            const outputFramesPath = `${outputFramesDir}/${(index+1).toString().padStart(3, '0')}.png`;
             const buffer = Buffer.from(base64String, 'base64');
-            await fs.writeFile(outputPath, buffer);
+            await fs.writeFile(outputFramesPath, buffer);
+
+            // write timestamps (distance from start of experiment time in ms) to directory
+            const outputTimestampsPath = `${outputTimestampsDir}/${(index+1).toString().padStart(3, '0')}.txt`;
+            const start = attackStartDateTime;
+            const time = new Date(timestamps[index]);
+            const diff = `${timestamps[index] - attackStartDateTime}`;
+            console.log(`start: ${start}, index: ${index}, time: ${time}, diff: ${diff}`);
+            await fs.writeFile(outputTimestampsPath, diff);
+
             // console.log(`Frame written to ${outputPath}`);
         });
 
-        await Promise.all(writeFileMap);
+        await Promise.all(writeFilesMap);
     } catch (e) {
         console.log(e);
     } finally {
