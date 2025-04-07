@@ -8,11 +8,11 @@ const fs = require('fs/promises');
 // clientVideoFilePath = file used to stream vid
 // scenario = UB (unmitigated baseline), MB (mitigated baseline), UA (unmitigated attack), MA (mitigated attack)
 // windowLength = length of pre-attack, during attack, post-attack windows in seconds
-// attackStartTime = linux time stating when attack starts
+// expStartTime = linux time when experiment starts, used for starting record-frame.js script
 const [ clientName, clientVideoFilePath, scenario,
-    windowLength, attackStartTime ] = process.argv.slice(2);
+    windowLength, expStartTime ] = process.argv.slice(2);
 const windowLengthNum = Number(windowLength);
-const attackStartDateTime = new Date(attackStartTime);
+const expStartDateTime = new Date(expStartTime);
 const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
 (async () => {
@@ -91,10 +91,9 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
             // write timestamps (distance from start of experiment time in ms) to directory
             const outputTimestampsPath = `${outputTimestampsDir}/${(index+1).toString().padStart(3, '0')}.txt`;
-            const start = attackStartDateTime;
             const time = new Date(timestamps[index]);
-            const diff = `${timestamps[index] - attackStartDateTime}`;
-            console.log(`start: ${start}, index: ${index}, time: ${time}, diff: ${diff}`);
+            const diff = `${timestamps[index] - expStartDateTime}`;
+            console.log(`start: ${expStartDateTime}, index: ${index}, time: ${time}, diff: ${diff}`);
             await fs.writeFile(outputTimestampsPath, diff);
 
             // console.log(`Frame written to ${outputPath}`);
