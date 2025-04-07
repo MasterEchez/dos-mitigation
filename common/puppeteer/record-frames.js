@@ -1,9 +1,14 @@
-const recordTime = 5000;
+// const recordTime; 
+// const expStartDateTime;
 const frames = [];
 const timestamps = [];
 let counter = 0;
 const startTime = Date.now();
 let finishedRecording = false;
+
+// while (new Date() < expStartDateTime) {
+//     await new Promise((resolve) => setTimeout(resolve, 20)); // Check every 100ms
+// }
 
 const intervalID = setInterval(() => {
     counter += 1;
