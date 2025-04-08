@@ -98,8 +98,8 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         }
         console.log("reached end of time period");
         const [frames, timestamps, finishedRecording] = await recordFramesScript.evaluate(() => [frames, timestamps, finishedRecording]);
-        console.log(finishedRecording);
-        // console.log(`num timestamps: ${timestamps.length}`)
+        // console.log(finishedRecording);
+        console.log(`num timestamps: ${timestamps.length}`)
 
         const outputFramesDir = `output/${scenario}/frames`;
         const outputTimestampsDir = `output/${scenario}/timestamps`;
