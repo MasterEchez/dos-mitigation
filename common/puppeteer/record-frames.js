@@ -16,6 +16,7 @@ const canvas = document.createElement('canvas');
 canvas.width = width;
 canvas.height = height;
 const ctx = canvas.getContext('2d');
+// const ctx = canvas.getContext('2d', {willReadFrequenctly: true});
 
 const intervalID = setInterval(() => {
     timestamps.push(Date.now());
@@ -23,12 +24,11 @@ const intervalID = setInterval(() => {
         // Capture the frame as a buffer
         ctx.drawImage(videoElement, 0, 0, width, height);
         const dataUrl = canvas.toDataURL('image/png');
-        const base64String = dataUrl.split(',')[1];
-        frames.push(base64String);
+        frames.push(dataUrl);
 
         // console.log(`Frame added to frames`);
     } catch (error) {
-        frames.push('-1');
+        frames.push(`-1: ${error}`);
         // console.error('Error saving frame:', error);
     }
 

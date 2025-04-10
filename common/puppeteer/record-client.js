@@ -99,16 +99,18 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
         console.log("reached end of time period");
         const [frames, timestamps, finishedRecording] = await recordFramesScript.evaluate(() => [frames, timestamps, finishedRecording]);
         // console.log(finishedRecording);
-        console.log(`num timestamps: ${timestamps.length}`)
+        // console.log(`num timestamps: ${timestamps.length}, num frames: ${frames.length}`);
+        // frames.map((frame) => console.log(frame));
 
         const outputFramesDir = `output/${scenario}/frames`;
         const outputTimestampsDir = `output/${scenario}/timestamps`;
         await fs.mkdir(outputFramesDir, {recursive: true});
         await fs.mkdir(outputTimestampsDir, {recursive: true});
 
-        const writeFilesMap = frames.map( async (base64String, index) => {
+        const writeFilesMap = frames.map( async (dataUrl, index) => {
             // write frames to directory
             const outputFramesPath = `${outputFramesDir}/${(index+1).toString().padStart(3, '0')}.png`;
+            const base64String = dataUrl.split(',')[1];
             const buffer = Buffer.from(base64String, 'base64');
             await fs.writeFile(outputFramesPath, buffer);
 
