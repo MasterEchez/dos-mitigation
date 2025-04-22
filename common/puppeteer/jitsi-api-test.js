@@ -28,6 +28,23 @@ const chromeArgs = [
     //'--alsa-output-device=plug:hw:0,1'
     '--alsa-input-device=plug:hw:0',
 ];
+const meetArgs = [
+    // Disable receiving of video
+    // 'config.channelLastN=0',
+    // Unmute our audio
+    'config.startWithAudioMuted=true',
+    // Unmute video
+    'config.startWithVideoMuted=false',
+    // Don't use simulcast to save resources on the sender (our) side
+    // 'config.disableSimulcast=true',
+    // Disable P2P mode due to a bug in Jitsi Meet
+    'config.p2p.enabled=false',
+    // Disable prejoin page
+    // 'config.prejoinPageEnabled=false'
+    // Disable self view (will also get rid of main video)
+    // 'config.disableSelfView=true',
+    'config.doNotFlipLocalVideo=true',
+];
 
 async function openHTML(filePath) {
     const browser = await puppeteer.launch({
@@ -44,21 +61,30 @@ async function openHTML(filePath) {
 
     await page.goto(fileURL);
     
-    await page.evaluate(() => {
+    await page.evaluate((clientName) => {
         const domain = 's0';//'meet.jit.si';
         const options = {
             roomName: 'dos-miti',
-            width: 700,
-            height: 700,
             parentNode: document.querySelector('#meet'),
+            configOverwrite: {
+                startWithAudioMuted: true,
+                startWithVideoMuted: false,
+                p2p: {
+                    enabled: false,
+                },
+                doNotFlipLocalVideo: true,
+            },
+            userInfo: {
+                displayName: clientName,
+            }
         };
         const api = new JitsiMeetExternalAPI(domain, options);
-    });
+    }, clientName);
 
     // await page.screenshot({ path: 'screenshot.png' }); // Optional: take a screenshot
     console.log(`Opened ${fileURL}`);
     console.log(await page.content());
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
     await recorder.stop();
 
     await browser.close();
