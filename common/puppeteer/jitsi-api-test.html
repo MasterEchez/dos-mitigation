@@ -8,5 +8,25 @@
     <!-- <script id="externalApi" src='https://meet.jit.si/external_api.js'></script> -->
     <script id="externalApi" src='https://s0/external_api.js'></script>
     <div id="meet"></div>
+    <script>
+        const domain = 's0';//'meet.jit.si';
+        const options = {
+            roomName: 'dos-miti',
+            parentNode: document.querySelector('#meet'),
+            configOverwrite: {
+                startWithAudioMuted: true,
+                startWithVideoMuted: false,
+                p2p: {
+                    enabled: false,
+                },
+                doNotFlipLocalVideo: true,
+            },
+            // userInfo: {
+            //     displayName: clientName,
+            // },
+            gatherStats: true
+        };
+        const api = new JitsiMeetExternalAPI(domain, options);
+    </script>
 </body>
 </html>
