@@ -76,15 +76,30 @@ async function openHTML(filePath) {
             },
             userInfo: {
                 displayName: clientName,
-            }
+            },
+            gatherStats: true
         };
         const api = new JitsiMeetExternalAPI(domain, options);
     }, clientName);
 
     // await page.screenshot({ path: 'screenshot.png' }); // Optional: take a screenshot
-    console.log(`Opened ${fileURL}`);
-    console.log(await page.content());
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // console.log(`Opened ${fileURL}`);
+    // console.log(await page.content());
+    await new Promise(resolve => setTimeout(resolve, 3000)); // wait for iframe to load
+
+    const iframeElement = await page.$('iframe');
+    const iframe = await iframeElement.contentFrame();
+    // const html = await iframe.evaluate(() => {
+    //     return document.body.innerHTML;
+    // });
+    // console.log(html);
+
+    await iframe.click('.primary');
+    await iframe.waitForSelector('#largeVideo', { timeout: 1000 });
+    await iframe.waitForFunction('document.querySelector("#largeVideo").readyState >= 2');
+
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
     await recorder.stop();
 
     await browser.close();
