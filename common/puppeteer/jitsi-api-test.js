@@ -76,7 +76,8 @@ async function openHTML(filePath) {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     console.log(await page.evaluate( () => {
-        return api;
+        // return api;
+        return Object.getOwnPropertyNames(JitsiMeetExternalAPI.prototype)
     }));
 
     await recorder.stop();
