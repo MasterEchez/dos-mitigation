@@ -2,7 +2,7 @@
 
 const puppeteer = require('puppeteer');
 const process = require('process');
-const [ clientName, videoFilepath ] = process.argv.slice(2);
+const [ clientName, videoFilepath, minutes ] = process.argv.slice(2);
 const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
 (async () => {
@@ -67,11 +67,7 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
             document.getElementById("remoteVideos").style.display = "none";
             document.querySelector('[aria-label="Jitsi Meet Logo, links to  Homepage"]').style.display = "none";
         });
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        while(true) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-        };
+        await new Promise(resolve => setTimeout(resolve, 1000 * 60 * Number(minutes)));
         
         // await recorder.stop();
         // await page.screenshot({path: 'in-meeting.png', fullPage: true});
