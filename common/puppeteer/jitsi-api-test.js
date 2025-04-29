@@ -47,6 +47,7 @@ const meetArgs = [
 ];
 
 async function openHTML(filePath) {
+    
     const browser = await puppeteer.launch({
         acceptInsecureCerts: true,
         args: chromeArgs,
@@ -55,34 +56,42 @@ async function openHTML(filePath) {
     const recorder = new PuppeteerScreenRecorder(page);
     await recorder.start("join-meeting.mp4");
 
-    // Construct the absolute file path
-    const absolutePath = path.resolve(filePath);
-    const fileURL = 'file://' + absolutePath;
+    try {
+        // Construct the absolute file path
+        const absolutePath = path.resolve(filePath);
+        const fileURL = 'file://' + absolutePath;
 
-    await page.goto(fileURL);
+        await page.goto(fileURL);
 
-    const iframeElement = await page.$('iframe');
-    const iframe = await iframeElement.contentFrame();
-    // const html = await iframe.evaluate(() => {
-    //     return document.body.innerHTML;
-    // });
-    // console.log(html);
-    await iframe.type('#premeeting-name-input', clientName);
-    await iframe.click('.primary');
-    await iframe.waitForSelector('#largeVideo', { timeout: 1000 });
-    await iframe.waitForFunction('document.querySelector("#largeVideo").readyState >= 2');
+        const iframeElement = await page.$('iframe');
+        const iframe = await iframeElement.contentFrame();
+        // const html = await iframe.evaluate(() => {
+        //     return document.body.innerHTML;
+        // });
+        // console.log(html);
+        await iframe.type('#premeeting-name-input', clientName);
+        await iframe.click('.primary');
+        await iframe.waitForSelector('#largeVideo');
+        await iframe.waitForFunction('document.querySelector("#largeVideo").readyState >= 2');
 
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-    console.log(await page.evaluate( () => {
-        // return api;
-        return Object.getOwnPropertyNames(JitsiMeetExternalAPI.prototype)
-    }));
+        const vars = await iframe.evaluate( () => {
+            const allVariables = [];
+            allVariables.push(APP.conference.getStats());
+            // allVariables.push(APP.conference._room);
+            return allVariables;
+        });
 
-    await recorder.stop();
+        vars.forEach(ele => console.log(ele));
 
-    await browser.close();
+    } catch (e) {
+        console.log(e);
+    } finally {
+        await recorder.stop();
+        await browser.close();
+    }
 }
 
 openHTML('./puppeteer/jitsi-api-test.html');
