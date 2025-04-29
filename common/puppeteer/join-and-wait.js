@@ -5,6 +5,8 @@ const process = require('process');
 const [ clientName, videoFilepath, minutes ] = process.argv.slice(2);
 const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
 
+const fromNow = Date.now() + 1000 * 60 * Number(minutes);
+
 (async () => {
     // https://community.jitsi.org/t/option-to-stream-video-on-headless-linux-server-without-headless-mode-web-browser-technic/119279
     // https://code.saghul.net/2017/09/streaming-a-webcam-to-a-jitsi-meet-room/
@@ -67,7 +69,23 @@ const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
             document.getElementById("remoteVideos").style.display = "none";
             document.querySelector('[aria-label="Jitsi Meet Logo, links to  Homepage"]').style.display = "none";
         });
-        await new Promise(resolve => setTimeout(resolve, 1000 * 60 * Number(minutes)));
+
+        while (Date.now() < fromNow) {
+            console.log(Date().toString());
+            try {
+                const vars = await page.evaluate( () => {
+                    const allVariables = [];
+                    allVariables.push(['stats', APP.conference.getStats()]);
+                    allVariables.push(['connection state', APP.conference._room.getConnectionState()]);
+                    return allVariables;
+                });
+                vars.forEach(ele => console.log(ele[0], ele[1]));
+            } catch (e) {
+                console.log(e);
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        // await new Promise(resolve => setTimeout(resolve, 1000 * 60 * Number(minutes)));
         
         // await recorder.stop();
         // await page.screenshot({path: 'in-meeting.png', fullPage: true});
