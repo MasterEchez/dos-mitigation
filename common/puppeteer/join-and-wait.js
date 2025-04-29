@@ -64,11 +64,6 @@ const fromNow = Date.now() + 1000 * 60 * Number(minutes);
             page.click('.primary'),
             new Promise(resolve => setTimeout(resolve, 2000)),
         ]);
-        
-        await page.evaluate(() => {
-            document.getElementById("remoteVideos").style.display = "none";
-            document.querySelector('[aria-label="Jitsi Meet Logo, links to  Homepage"]').style.display = "none";
-        });
 
         while (Date.now() < fromNow) {
             console.log(Date().toString());
