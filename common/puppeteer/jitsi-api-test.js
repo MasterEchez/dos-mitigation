@@ -75,12 +75,12 @@ async function openHTML(filePath) {
         await iframe.waitForFunction('document.querySelector("#largeVideo").readyState >= 2');
 
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 15000));
 
         const vars = await iframe.evaluate( () => {
             const allVariables = [];
             allVariables.push(APP.conference.getStats());
-            // allVariables.push(APP.conference._room);
+            allVariables.push(APP.conference._room.getConnectionState());
             return allVariables;
         });
 

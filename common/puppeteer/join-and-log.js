@@ -65,21 +65,34 @@ const fromNow = Date.now() + 1000 * 60 * Number(minutes);
             new Promise(resolve => setTimeout(resolve, 2000)),
         ]);
 
+        const scriptId = 'loggerScript';
+        const loggerPath = "./puppeteer/logger.js";
+        const loggerScript = await page.addScriptTag({path: loggerPath, id: scriptId});
+
         while (Date.now() < fromNow) {
-            console.log(Date().toString());
-            try {
-                const vars = await page.evaluate( () => {
-                    const allVariables = [];
-                    allVariables.push(['stats', APP.conference.getStats()]);
-                    allVariables.push(['connection state', APP.conference._room.getConnectionState()]);
-                    return allVariables;
-                });
-                vars.forEach(ele => console.log(ele[0], ele[1]));
-            } catch (e) {
-                console.log(e);
-            }
+            // console.log(Date().toString());
+            // try {
+            //     const vars = await page.evaluate( () => {
+            //         const allVariables = [];
+            //         allVariables.push(['stats', APP.conference.getStats()]);
+            //         allVariables.push(['connection state', APP.conference._room.getConnectionState()]);
+            //         return allVariables;
+            //     });
+            //     vars.forEach(ele => console.log(ele[0], ele[1]));
+            // } catch (e) {
+            //     console.log(e);
+            // }
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
+
+        const logged = await page.evaluate( () => {
+            return logged.length;
+        })
+        console.log(logged);
+        // console.log(logged[0]);
+        // console.log(logged[1]);
+        // console.log(logged[2]);
+        // console.log(logged[3]);
         // await new Promise(resolve => setTimeout(resolve, 1000 * 60 * Number(minutes)));
         
         // await recorder.stop();
