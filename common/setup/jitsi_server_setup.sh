@@ -31,3 +31,6 @@ sudo apt install debconf-utils
 echo "jitsi-videobridge jitsi-videobridge/jvb-hostname string $server_ip" | sudo debconf-set-selections
 echo "jitsi-meet-web-config jitsi-meet/cert-choice select Generate a new self-signed certificate" | sudo debconf-set-selections
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y install jitsi-meet
+sudo sed -i "s/\/\/ pcStatsInterval: 10000/pcStatsInterval: 500/g" /etc/jitsi/meet/$server_ip-config.js
+sudo sed -i "s/\/\/ rtcstatsPollInterval: 10000/rtcstatsPollInterval: 500/g" /etc/jitsi/meet/$server_ip-config.js
+sudo sed -i "s/\/\/ gatherStats: false/gatherStats: true/g" /etc/jitsi/meet/$server_ip-config.js
