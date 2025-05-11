@@ -117,8 +117,8 @@ async function openHTML(filePath) {
                 }
             });
 
-        console.log(refinedLogs[0]);
-        console.log(refinedLogs[refinedLogs.length-1]);
+        // console.log(refinedLogs[0]);
+        // console.log(refinedLogs[refinedLogs.length-1]);
         // console.log(refinedLogs.length);
 
         const headers = Object.keys(refinedLogs[0]);
