@@ -6,12 +6,11 @@ const path = require('path');
 // scenario = UB (unmitigated baseline), MB (mitigated baseline), UA (unmitigated attack), MA (mitigated attack)
 // windowLength = length of pre-attack, during attack, post-attack windows in seconds
 // expStartTime = linux time when experiment starts, used for starting record-frame.js script
-const [ clientName, clientVideoFilePath, scenario,
-    windowLength, expStartTime ] = process.argv.slice(2);
-const windowLengthNum = Number(windowLength);
-const expStartDateTime = new Date(expStartTime);
+const [ clientName, videoFilepath, minutes ] = process.argv.slice(2);
 const recordFramesPath = "./puppeteer/record-frames.js";
 const { PuppeteerScreenRecorder } = require("puppeteer-screen-recorder");
+
+const fromNow = Date.now() + 1000 * 60 * Number(minutes);
 
 
 const chromeArgs = [
@@ -23,7 +22,7 @@ const chromeArgs = [
     // test pattern
     '--use-fake-device-for-media-stream',
     // file for capture
-    `--use-file-for-fake-video-capture=${clientVideoFilePath}`,
+    `--use-file-for-fake-video-capture=${videoFilepath}`,
     //  You may need to play with these options to get proper input and output
     //'--alsa-output-device=plug:hw:0,1'
     '--alsa-input-device=plug:hw:0',
@@ -75,16 +74,32 @@ async function openHTML(filePath) {
         await iframe.waitForFunction('document.querySelector("#largeVideo").readyState >= 2');
 
 
-        await new Promise(resolve => setTimeout(resolve, 15000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        const vars = await iframe.evaluate( () => {
-            const allVariables = [];
-            allVariables.push(APP.conference.getStats());
-            allVariables.push(APP.conference._room.getConnectionState());
-            return allVariables;
-        });
+        while (Date.now() < fromNow) {
+            console.log(Date().toString());
+            try {
+                const vars = await iframe.evaluate( () => {
+                    const allVariables = [];
+                    allVariables.push(['stats', APP.conference.getStats()]);
+                    allVariables.push(['connection state', APP.conference._room.getConnectionState()]);
+                    return allVariables;
+                });
+                vars.forEach(ele => console.log(ele[0], ele[1]));
+            } catch (e) {
+                console.log(e);
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
 
-        vars.forEach(ele => console.log(ele));
+        // const vars = await iframe.evaluate( () => {
+        //     const allVariables = [];
+        //     allVariables.push(APP.conference.getStats());
+        //     allVariables.push(APP.conference._room.getConnectionState());
+        //     return allVariables;
+        // });
+
+        // vars.forEach(ele => console.log(ele));
 
     } catch (e) {
         console.log(e);
