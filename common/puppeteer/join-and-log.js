@@ -78,12 +78,12 @@ async function openHTML(filePath) {
         await iframe.click('.primary');
 
         while (Date.now() < expStartDateTime) {
-            console.log("a");
+            // console.log("a");
             await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         while (Date.now() < expEndDateTime) {
-            const time = Date().now();
+            const time = Date.now();
             // console.log(time);
             try {
                 stats = await iframe.evaluate(  () => {
@@ -97,33 +97,51 @@ async function openHTML(filePath) {
         }
 
         // console.log(logs);
-        console.log(logs[0]);
-        console.log(logs[logs.length-1]);
-        console.log(logs.length);
+        // console.log(logs[0]);
+        // console.log(logs[logs.length-1]);
+        // console.log(logs.length);
 
-        // logs.filter( (value) => value.stats.)
+        // console.log(logs.filter( (value) => value.stats.transport !== undefined && value.stats.transport.length !== 0).length);
+        const refinedLogs = logs.filter( (value) => value.stats.transport !== undefined && value.stats.transport.length !== 0)
+            .map( (value) => {
+                return {
+                    timestamp: value.time,
+                    jvb_rtt: value.stats.jvbRTT,
+                    bandwidth_download: value.stats.bandwidth.download,
+                    bandwidth_upload: value.stats.bandwidth.upload,
+                    bitrate_download: value.stats.bitrate.download,
+                    bitrate_upload: value.stats.bitrate.upload,
+                    packetloss_total: value.stats.packetLoss.total,
+                    packetloss_download: value.stats.packetLoss.download,
+                    packetloss_upload: value.stats.packetLoss.upload
+                }
+            });
+
+        console.log(refinedLogs[0]);
+        console.log(refinedLogs[refinedLogs.length-1]);
+        // console.log(refinedLogs.length);
+
+        const headers = Object.keys(refinedLogs[0]);
+        const csvRows = [];
+
+        csvRows.push(headers.join(","));
+
+        for (const row of refinedLogs) {
+            const values = headers.map((header) => {
+                const cellValue = row[header];
+                return typeof cellValue === 'string' ? `"${cellValue.replace(/"/g, '""')}"` : cellValue;
+            });
+            csvRows.push(values.join(","));
+        }
+        const csvOutput = csvRows.join("\n");
+
+        // console.log(csvOutput);
 
         const logDir = `/tmp/logs`;
         await fs.mkdir(logDir, {recursive: true});
 
-        // const writeLogsPromise = logs.map( async (dataUrl, index) => {
-            // // write frames to directory
-            // const outputFramesPath = `${logDir}/${(index+1).toString().padStart(3, '0')}.png`;
-            // const base64String = dataUrl.split(',')[1];
-            // const buffer = Buffer.from(base64String, 'base64');
-            // await fs.writeFile(outputFramesPath, buffer);
-
-            // // write timestamps (distance from start of experiment time in ms) to directory
-            // const outputTimestampsPath = `${outputTimestampsDir}/${(index+1).toString().padStart(3, '0')}.txt`;
-            // const time = new Date(timestamps[index]);
-            // const diff = `${timestamps[index] - expStartDateTime}`;
-            // console.log(`start: ${expStartDateTime}, index: ${index}, time: ${time}, diff: ${diff}`);
-            // await fs.writeFile(outputTimestampsPath, diff);
-
-            // console.log(`Frame written to ${outputPath}`);
-        // });
-
-        // await Promise.all(writeLogsPromise);
+        const logStatsPath = `${logDir}/jitsi.csv`;
+        await fs.writeFile(logStatsPath, csvOutput);
 
     } catch (e) {
         console.log(e);
