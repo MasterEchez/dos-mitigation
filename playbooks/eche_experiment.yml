@@ -23,10 +23,14 @@
   gather_facts: no
   tasks:
   - name: start jitsi clients
-    shell: node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
+    shell: |
+      . ~/.nvm/nvm.sh
+      node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
     async: "{{ window_length | int * 3 + exp_delay | int + post_attack_delay | int }}"
     poll: 0
     register: client_async
+    args:
+      executable: /bin/bash
   - name: wait for client logging to start
     pause:
       seconds: "{{ exp_delay }}"
@@ -48,7 +52,7 @@
   gather_facts: no
   tasks:
   - name: restart jitsi
-    shell: sudo {{ user_dir }}/common/jitsi/restarter.sh
+    shell: "{{ user_dir }}/common/jitsi/restarter.sh"
   become: yes
 
 - hosts: server, router, sink, active_clients, active_attackers
@@ -87,10 +91,14 @@
   gather_facts: no
   tasks:
   - name: start jitsi clients
-    shell: node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
+    shell: |
+      . ~/.nvm/nvm.sh
+      node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
     async: "{{ window_length | int * 3 + exp_delay | int + post_attack_delay | int }}"
     poll: 0
     register: client_async
+    args:
+      executable: /bin/bash
   - name: wait for client logging to start
     pause:
       seconds: "{{ exp_delay }}"
@@ -147,7 +155,7 @@
   gather_facts: no
   tasks:
   - name: restart jitsi
-    shell: sudo {{ user_dir }}/common/jitsi/restarter.sh
+    shell: "{{ user_dir }}/common/jitsi/restarter.sh"
   become: yes
 
 - hosts: server, router, sink, active_clients, active_attackers
@@ -177,10 +185,14 @@
   gather_facts: no
   tasks:
   - name: start jitsi clients
-    shell: node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
+    shell: |
+      . ~/.nvm/nvm.sh
+      node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
     async: "{{ window_length | int * 3 + exp_delay | int + post_attack_delay | int }}"
     poll: 0
     register: client_async
+    args:
+      executable: /bin/bash
   - name: wait for client logging to start
     pause:
       seconds: "{{ exp_delay }}"
@@ -202,7 +214,7 @@
   gather_facts: no
   tasks:
   - name: restart jitsi
-    shell: sudo {{ user_dir }}/common/jitsi/restarter.sh
+    shell: "{{ user_dir }}/common/jitsi/restarter.sh"
   become: yes
 
 - hosts: server, router, sink, active_clients, active_attackers
@@ -240,10 +252,14 @@
   gather_facts: no
   tasks:
   - name: start jitsi clients
-    shell: node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
+    shell: |
+      . ~/.nvm/nvm.sh
+      node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
     async: "{{ window_length | int * 3 + exp_delay | int + post_attack_delay | int }}"
     poll: 0
     register: client_async
+    args:
+      executable: /bin/bash
   - name: wait for client logging to start
     pause:
       seconds: "{{ exp_delay }}"
@@ -300,7 +316,7 @@
   gather_facts: no
   tasks:
   - name: restart jitsi
-    shell: sudo {{ user_dir }}/common/jitsi/restarter.sh
+    shell: "{{ user_dir }}/common/jitsi/restarter.sh"
   become: yes
 
 - hosts: server, router, sink, active_clients, active_attackers
