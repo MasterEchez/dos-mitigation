@@ -22,20 +22,23 @@
 - hosts: active_clients
   gather_facts: no
   tasks:
-  - name: start {{ client_app }} clients
-    shell: timeout {{ client_duration }} {{ user_dir }}/common/clients/{{ client_app }}.sh {{ server_name }} {{ client_interval }} {{ file_size }}
-    async: "{{ client_duration }}"
+  - name: start jitsi clients
+    shell: node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
+    async: "{{ window_length | int * 3 + exp_delay | int + post_attack_delay | int }}"
     poll: 0
     register: client_async
-  - name: wait for clients
+  - name: wait for client logging to start
     pause:
-      seconds: "{{ client_duration }}"
+      seconds: "{{ exp_delay }}"
+  - name: wait for client logging to finish
+    pause:
+      seconds: "{{ window_length | int * 3 + post_attack_delay | int }}"
   - name: check on clients
     async_status:
       jid: "{{ client_async.ansible_job_id }}"
     register: result
     until: result.finished
-    failed_when: result.rc not in [0, 124]
+    failed_when: result.rc != 0
   - name: async cleanup
     async_status:
       jid: "{{ client_async.ansible_job_id }}"
@@ -44,12 +47,9 @@
 - hosts: server
   gather_facts: no
   tasks:
-  - name: restart nginx
-    systemd:
-      name: nginx
-      state: restarted
-      daemon_reload: yes
-    become: yes
+  - name: restart jitsi
+    shell: sudo {{ user_dir }}/common/jitsi/restarter.sh
+  become: yes
 
 - hosts: server, router, sink, active_clients, active_attackers
   gather_facts: no
@@ -72,6 +72,7 @@
 
 # Unmitigated Attack
 - import_playbook: "clear_logs.yml"
+
 - hosts: active_attackers
   gather_facts: no
   tasks:
@@ -81,37 +82,34 @@
   - name: get local IP
     shell: "getent hosts {{ inventory_hostname }} | awk '{ print $1 }'"
     register: local_ip
-  - name: launch {{ attack_type }} attack at {{ server_name }}
-    shell: timeout {{ attack_duration }} cpulimit -l {{ attacker_cpu_limit }} -f -- {{ user_dir }}/common/attacks/{{ attack_type }} {{ server_ip.stdout }} {{ attacker_busywait }} {{ local_ip.stdout }}
-    async: "{{ attack_duration }}"
-    poll: 0
-    become: yes
-    register: attacker_async
 
 - hosts: active_clients
   gather_facts: no
   tasks:
-  - name: start {{ client_app }} clients
-    shell: timeout {{ client_duration }} {{ user_dir }}/common/clients/{{ client_app }}.sh {{ server_name }} {{ client_interval }} {{ file_size }}
-    async: "{{ client_duration }}"
+  - name: start jitsi clients
+    shell: node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
+    async: "{{ window_length | int * 3 + exp_delay | int + post_attack_delay | int }}"
     poll: 0
     register: client_async
-  - name: wait for clients
+  - name: wait for client logging to start
     pause:
-      seconds: "{{ client_duration }}"
-  - name: check on clients
-    async_status:
-      jid: "{{ client_async.ansible_job_id }}"
-    register: result
-    until: result.finished
-    failed_when: result.rc not in [0, 124]
-  - name: async cleanup
-    async_status:
-      jid: "{{ client_async.ansible_job_id }}"
-      mode: cleanup
+      seconds: "{{ exp_delay }}"
+  - name: wait for first window
+    pause:
+      seconds: "{{ window_length }}"
 
 - hosts: active_attackers
+  gather_facts: no
   tasks:
+  - name: launch {{ attack_type }} attack at {{ server_name }}
+    shell: timeout {{ window_length }} cpulimit -l {{ attacker_cpu_limit }} -f -- {{ user_dir }}/common/attacks/{{ attack_type }} {{ server_ip.stdout }} {{ attacker_busywait }} {{ local_ip.stdout }}
+    async: "{{ window_length }}"
+    poll: 0
+    become: yes
+    register: attacker_async
+  - name: wait for second window
+    pause:
+      seconds: "{{ window_length }}"
   - name: check on attackers
     async_status:
       jid: "{{ attacker_async.ansible_job_id }}"
@@ -124,19 +122,33 @@
       jid: "{{ attacker_async.ansible_job_id }}"
       mode: cleanup
     become: yes
-  - name: wait for attack traffic to flush out
+  - name: wait for third window
+    pause:
+      seconds: "{{ window_length }}"
+
+- hosts: active_clients
+  gather_facts: no
+  tasks:
+  - name: wait for logging to be finished
     pause:
       seconds: "{{ post_attack_delay }}"
+  - name: check on clients
+    async_status:
+      jid: "{{ client_async.ansible_job_id }}"
+    register: result
+    until: result.finished
+    failed_when: result.rc != 0
+  - name: async cleanup
+    async_status:
+      jid: "{{ client_async.ansible_job_id }}"
+      mode: cleanup
 
 - hosts: server
   gather_facts: no
   tasks:
-  - name: restart nginx
-    systemd:
-      name: nginx
-      state: restarted
-      daemon_reload: yes
-    become: yes
+  - name: restart jitsi
+    shell: sudo {{ user_dir }}/common/jitsi/restarter.sh
+  become: yes
 
 - hosts: server, router, sink, active_clients, active_attackers
   gather_facts: no
@@ -164,20 +176,23 @@
 - hosts: active_clients
   gather_facts: no
   tasks:
-  - name: start {{ client_app }} clients
-    shell: timeout {{ client_duration }} {{ user_dir }}/common/clients/{{ client_app }}.sh {{ server_name }} {{ client_interval }} {{ file_size }}
-    async: "{{ client_duration }}"
+  - name: start jitsi clients
+    shell: node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
+    async: "{{ window_length | int * 3 + exp_delay | int + post_attack_delay | int }}"
     poll: 0
     register: client_async
-  - name: wait for clients
+  - name: wait for client logging to start
     pause:
-      seconds: "{{ client_duration }}"
+      seconds: "{{ exp_delay }}"
+  - name: wait for client logging to finish
+    pause:
+      seconds: "{{ window_length | int * 3 + post_attack_delay | int }}"
   - name: check on clients
     async_status:
       jid: "{{ client_async.ansible_job_id }}"
     register: result
     until: result.finished
-    failed_when: result.rc not in [0, 124]
+    failed_when: result.rc != 0
   - name: async cleanup
     async_status:
       jid: "{{ client_async.ansible_job_id }}"
@@ -186,12 +201,9 @@
 - hosts: server
   gather_facts: no
   tasks:
-  - name: restart nginx
-    systemd:
-      name: nginx
-      state: restarted
-      daemon_reload: yes
-    become: yes
+  - name: restart jitsi
+    shell: sudo {{ user_dir }}/common/jitsi/restarter.sh
+  become: yes
 
 - hosts: server, router, sink, active_clients, active_attackers
   gather_facts: no
@@ -223,37 +235,34 @@
   - name: get local IP
     shell: "getent hosts {{ inventory_hostname }} | awk '{ print $1 }'"
     register: local_ip
-  - name: launching {{ mitigated_attack_type }} attack at {{ server_name }}
-    shell: timeout {{ attack_duration }} cpulimit -l {{ attacker_cpu_limit }} -f -- {{ user_dir }}/common/attacks/{{ mitigated_attack_type }} {{ server_ip.stdout }} {{ attacker_busywait }} {{ local_ip.stdout }}
-    async: "{{ attack_duration }}"
-    poll: 0
-    register: attacker_async
-    become: yes
 
 - hosts: active_clients
   gather_facts: no
   tasks:
-  - name: start {{ client_app }} clients
-    shell: timeout {{ client_duration }} {{ user_dir }}/common/clients/{{ client_app }}.sh {{ server_name }} {{ client_interval }} {{ file_size }}
-    async: "{{ client_duration }}"
+  - name: start jitsi clients
+    shell: node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
+    async: "{{ window_length | int * 3 + exp_delay | int + post_attack_delay | int }}"
     poll: 0
     register: client_async
-  - name: wait for clients
+  - name: wait for client logging to start
     pause:
-      seconds: "{{ client_duration }}"
-  - name: check on clients
-    async_status:
-      jid: "{{ client_async.ansible_job_id }}"
-    register: result
-    until: result.finished
-    failed_when: result.rc not in [0, 124]
-  - name: async cleanup
-    async_status:
-      jid: "{{ client_async.ansible_job_id }}"
-      mode: cleanup
+      seconds: "{{ exp_delay }}"
+  - name: wait for first window
+    pause:
+      seconds: "{{ window_length }}"
 
 - hosts: active_attackers
+  gather_facts: no
   tasks:
+  - name: launch {{ attack_type }} attack at {{ server_name }}
+    shell: timeout {{ window_length }} cpulimit -l {{ attacker_cpu_limit }} -f -- {{ user_dir }}/common/attacks/{{ attack_type }} {{ server_ip.stdout }} {{ attacker_busywait }} {{ local_ip.stdout }}
+    async: "{{ window_length }}"
+    poll: 0
+    become: yes
+    register: attacker_async
+  - name: wait for second window
+    pause:
+      seconds: "{{ window_length }}"
   - name: check on attackers
     async_status:
       jid: "{{ attacker_async.ansible_job_id }}"
@@ -266,19 +275,33 @@
       jid: "{{ attacker_async.ansible_job_id }}"
       mode: cleanup
     become: yes
-  - name: wait for attack traffic to flush out
+  - name: wait for third window
+    pause:
+      seconds: "{{ window_length }}"
+
+- hosts: active_clients
+  gather_facts: no
+  tasks:
+  - name: wait for logging to be finished
     pause:
       seconds: "{{ post_attack_delay }}"
+  - name: check on clients
+    async_status:
+      jid: "{{ client_async.ansible_job_id }}"
+    register: result
+    until: result.finished
+    failed_when: result.rc != 0
+  - name: async cleanup
+    async_status:
+      jid: "{{ client_async.ansible_job_id }}"
+      mode: cleanup
 
 - hosts: server
   gather_facts: no
   tasks:
-  - name: restart nginx
-    systemd:
-      name: nginx
-      state: restarted
-      daemon_reload: yes
-    become: yes
+  - name: restart jitsi
+    shell: sudo {{ user_dir }}/common/jitsi/restarter.sh
+  become: yes
 
 - hosts: server, router, sink, active_clients, active_attackers
   gather_facts: no
