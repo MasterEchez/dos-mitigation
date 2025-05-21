@@ -35,3 +35,4 @@ sudo sed -i "s/\/\/ pcStatsInterval: 10000/pcStatsInterval: 500/g" /etc/jitsi/me
 sudo sed -i "s/\/\/ rtcstatsPollInterval: 10000/rtcstatsPollInterval: 500/g" /etc/jitsi/meet/$server_ip-config.js
 sudo sed -i "s/\/\/ gatherStats: false/gatherStats: true/g" /etc/jitsi/meet/$server_ip-config.js
 # sudo sed -i 's/addresses = \[.*\]/addresses = \[\]/g' /etc/jitsi/videobridge/jvb.conf
+sudo hocon -f /etc/jitsi/videobridge/jvb.conf set videobridge.health.require-valid-address false
