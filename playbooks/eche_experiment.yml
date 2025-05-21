@@ -153,9 +153,9 @@
       when: inventory_hostname in groups['active_attackers']
 
     # --- WAIT & CLEANUP SECTION (all hosts) ---
-    - name: Wait for total logging period
+    - name: Wait for rest of logging period
       pause:
-        seconds: "{{ exp_delay | int + total_logging_time | int }}"
+        seconds: "{{ window_length | int + post_attack_delay | int }}"
 
     - name: Cleanup async client task
       async_status:
@@ -196,180 +196,185 @@
       flat: yes
     ignore_errors: yes
 
-# # Mitigated Baseline
-# - import_playbook: "clear_logs.yml"
-# - import_playbook: "mitigations/{{ mitigation }}_enable.yml"
+# Mitigated Baseline
+- import_playbook: "clear_logs.yml"
+- import_playbook: "mitigations/{{ mitigation }}_enable.yml"
 
-# - hosts: localhost
-#   gather_facts: no
-#   tasks:
-#     - name: Set synchronized start time (exp_delay seconds in the future)
-#       set_fact:
-#         sync_start_time: "{{ lookup('pipe', 'date -u -d \"+' ~ exp_delay ~ ' seconds\" +%Y-%m-%dT%H:%M:%S.%3NZ') }}"
-#     - name: Print sync_start_time
-#       debug:
-#         msg: "The sync start time is: {{ sync_start_time }}"
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Set synchronized start time (exp_delay seconds in the future)
+      set_fact:
+        sync_start_time: "{{ lookup('pipe', 'date -u -d \"+' ~ exp_delay ~ ' seconds\" +%Y-%m-%dT%H:%M:%S.%3NZ') }}"
+    - name: Print sync_start_time
+      debug:
+        msg: "The sync start time is: {{ sync_start_time }}"
 
-# - hosts: active_clients
-#   gather_facts: no
-#   vars:
-#     total_async_time: "{{ window_length | int * 3 + post_attack_delay | int + exp_delay | int }}"
-#   tasks:
-#     - name: Start Jitsi clients with sync timestamp
-#       shell: |
-#         . ~/.nvm/nvm.sh
-#         node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
-#       async: "{{ total_async_time }}"
-#       poll: 0
-#       register: client_async
-#       args:
-#         executable: /bin/bash
+- hosts: active_clients
+  gather_facts: no
+  vars:
+    total_async_time: "{{ window_length | int * 3 + post_attack_delay | int + exp_delay | int }}"
+  tasks:
+    - name: Start Jitsi clients with sync timestamp
+      shell: |
+        . ~/.nvm/nvm.sh
+        node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
+      async: "{{ total_async_time }}"
+      poll: 0
+      register: client_async
+      args:
+        executable: /bin/bash
 
-#     - name: Wait for client logging to finish
-#       pause:
-#         seconds: "{{ exp_delay | int + window_length | int * 3 + post_attack_delay | int }}"
+    - name: Wait for client logging to finish
+      pause:
+        seconds: "{{ exp_delay | int + window_length | int * 3 + post_attack_delay | int }}"
 
-#     - name: Check on clients
-#       async_status:
-#         jid: "{{ client_async.ansible_job_id }}"
-#       register: result
-#       until: result.finished
-#       retries: 10
-#       delay: 3
-#       failed_when: result.rc != 0
+    - name: Check on clients
+      async_status:
+        jid: "{{ client_async.ansible_job_id }}"
+      register: result
+      until: result.finished
+      retries: 10
+      delay: 3
+      failed_when: result.rc != 0
 
-#     - name: Async cleanup
-#       async_status:
-#         jid: "{{ client_async.ansible_job_id }}"
-#         mode: cleanup
+    - name: Async cleanup
+      async_status:
+        jid: "{{ client_async.ansible_job_id }}"
+        mode: cleanup
 
-# - hosts: server
-#   gather_facts: no
-#   tasks:
-#   - name: restart jitsi
-#     shell: "{{ user_dir }}/common/jitsi/restarter.sh"
-#   become: yes
+- hosts: server
+  gather_facts: no
+  tasks:
+  - name: restart jitsi
+    shell: "{{ user_dir }}/common/jitsi/restarter.sh"
+  become: yes
 
-# - hosts: server, router, sink, active_clients, active_attackers
-#   gather_facts: no
-#   tasks:
-#   - name: wait for logging to finish
-#     pause:
-#       seconds: "{{ cleanup_delay }}"
-#   - name: compress logs
-#     archive:
-#       path: /tmp/logs
-#       dest: /tmp/logs.zip
-#       format: zip
-#     ignore_errors: yes
-#   - name: collect logs
-#     fetch:
-#       src: /tmp/logs.zip
-#       dest: "{{ user_dir }}/logs/{{ session }}/{{ timestamp }}/{{ inventory_hostname }}/MB/"
-#       flat: yes
-#     ignore_errors: yes
+- hosts: server, router, sink, active_clients, active_attackers
+  gather_facts: no
+  tasks:
+  - name: wait for logging to finish
+    pause:
+      seconds: "{{ cleanup_delay }}"
+  - name: compress logs
+    archive:
+      path: /tmp/logs
+      dest: /tmp/logs.zip
+      format: zip
+    ignore_errors: yes
+  - name: collect logs
+    fetch:
+      src: /tmp/logs.zip
+      dest: "{{ user_dir }}/logs/{{ session }}/{{ timestamp }}/{{ inventory_hostname }}/MB/"
+      flat: yes
+    ignore_errors: yes
 
-# # Mitigated Attack
-# - import_playbook: "clear_logs.yml"
-# - hosts: active_attackers
-#   gather_facts: no
-#   tasks:
-#   - name: get server IP
-#     shell: "getent hosts {{ server_name }} | awk '{ print $1 }'"
-#     register: server_ip
-#   - name: get local IP
-#     shell: "getent hosts {{ inventory_hostname }} | awk '{ print $1 }'"
-#     register: local_ip
+# Mitigated Attack
+- import_playbook: "clear_logs.yml"
+- hosts: active_attackers
+  gather_facts: no
+  tasks:
+  - name: get server IP
+    shell: "getent hosts {{ server_name }} | awk '{ print $1 }'"
+    register: server_ip
+  - name: get local IP
+    shell: "getent hosts {{ inventory_hostname }} | awk '{ print $1 }'"
+    register: local_ip
 
-# - hosts: active_clients
-#   gather_facts: no
-#   tasks:
-#   - name: start jitsi clients
-#     shell: |
-#       . ~/.nvm/nvm.sh
-#       node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "$(date -u -d '+{{ exp_delay }} seconds')" 0
-#     async: "{{ window_length | int * 3 + exp_delay | int + post_attack_delay | int }}"
-#     poll: 0
-#     register: client_async
-#     args:
-#       executable: /bin/bash
-#   - name: wait for client logging to start
-#     pause:
-#       seconds: "{{ exp_delay }}"
-#   - name: wait for first window
-#     pause:
-#       seconds: "{{ window_length }}"
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Set synchronized start time (exp_delay seconds in the future)
+      set_fact:
+        sync_start_time: "{{ lookup('pipe', 'date -u -d \"+' ~ exp_delay ~ ' seconds\" +%Y-%m-%dT%H:%M:%S.%3NZ') }}"
+    - name: Print sync_start_time
+      debug:
+        msg: "The sync start time is: {{ sync_start_time }}"
 
-# - hosts: active_attackers
-#   gather_facts: no
-#   tasks:
-#   - name: launch {{ attack_type }} attack at {{ server_name }}
-#     shell: timeout {{ window_length }} cpulimit -l {{ attacker_cpu_limit }} -f -- {{ user_dir }}/common/attacks/{{ attack_type }} {{ server_ip.stdout }} {{ attacker_busywait }} {{ local_ip.stdout }}
-#     async: "{{ window_length }}"
-#     poll: 0
-#     become: yes
-#     register: attacker_async
-#   - name: wait for second window
-#     pause:
-#       seconds: "{{ window_length }}"
-#   - name: check on attackers
-#     async_status:
-#       jid: "{{ attacker_async.ansible_job_id }}"
-#     register: result
-#     until: result.finished
-#     failed_when: result.rc not in [0, 124]
-#     become: yes
-#   - name: async cleanup
-#     async_status:
-#       jid: "{{ attacker_async.ansible_job_id }}"
-#       mode: cleanup
-#     become: yes
-#   - name: wait for third window
-#     pause:
-#       seconds: "{{ window_length }}"
+- hosts: active_clients,active_attackers
+  gather_facts: no
+  vars:
+    total_logging_time: "{{ window_length | int * 3 + post_attack_delay | int }}"
+    attack_start_offset: "{{ window_length | int }}"   # start at 2nd window
+    attack_duration: "{{ window_length | int }}"
+    total_async_time: "{{ exp_delay | int + total_logging_time | int }}"
+  tasks:
 
-# - hosts: active_clients
-#   gather_facts: no
-#   tasks:
-#   - name: wait for logging to be finished
-#     pause:
-#       seconds: "{{ post_attack_delay }}"
-#   - name: check on clients
-#     async_status:
-#       jid: "{{ client_async.ansible_job_id }}"
-#     register: result
-#     until: result.finished
-#     failed_when: result.rc != 0
-#   - name: async cleanup
-#     async_status:
-#       jid: "{{ client_async.ansible_job_id }}"
-#       mode: cleanup
+    # --- CLIENT TASKS ---
+    - name: Start Jitsi clients with sync timestamp
+      shell: |
+        . ~/.nvm/nvm.sh
+        node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
+      async: "{{ total_async_time }}"
+      poll: 0
+      register: client_async
+      args:
+        executable: /bin/bash
+      when: inventory_hostname in groups['active_clients']
 
-# - hosts: server
-#   gather_facts: no
-#   tasks:
-#   - name: restart jitsi
-#     shell: "{{ user_dir }}/common/jitsi/restarter.sh"
-#   become: yes
+    # --- ATTACKER TASKS ---
+    - name: Wait until second window (relative to sync_start_time)
+      shell: |
+        sync_ts="{{ hostvars['localhost'].sync_start_time }}"
+        start_time=$(date -d "$sync_ts" +%s)
+        now=$(date +%s)
+        delay=$((start_time + {{ attack_start_offset }} - now))
+        [ $delay -gt 0 ] && sleep $delay
+      args:
+        executable: /bin/bash
+      when: inventory_hostname in groups['active_attackers']
 
-# - hosts: server, router, sink, active_clients, active_attackers
-#   gather_facts: no
-#   tasks:
-#   - name: wait for logging to finish
-#     pause:
-#       seconds: "{{ cleanup_delay }}"
-#   - name: compress logs
-#     archive:
-#       path: /tmp/logs
-#       dest: /tmp/logs.zip
-#       format: zip
-#     ignore_errors: yes
-#   - name: collect logs
-#     fetch:
-#       src: /tmp/logs.zip
-#       dest: "{{ user_dir }}/logs/{{ session }}/{{ timestamp }}/{{ inventory_hostname }}/MA/"
-#       flat: yes
-#     ignore_errors: yes
+    - name: launch {{ attack_type }} attack at {{ server_name }} during second window
+      shell: timeout {{ attack_duration }} cpulimit -l {{ attacker_cpu_limit }} -f -- {{ user_dir }}/common/attacks/{{ attack_type }} {{ server_ip.stdout }} {{ attacker_busywait }} {{ local_ip.stdout }}
+      async: "{{ attack_duration | int + 10 }}"
+      poll: 0
+      become: yes
+      register: attack_async
+      when: inventory_hostname in groups['active_attackers']
+
+    # --- WAIT & CLEANUP SECTION (all hosts) ---
+    - name: Wait for rest of logging period
+      pause:
+        seconds: "{{ window_length | int + post_attack_delay | int }}"
+
+    - name: Cleanup async client task
+      async_status:
+        jid: "{{ client_async.ansible_job_id }}"
+        mode: cleanup
+      when: inventory_hostname in groups['active_clients'] and client_async is defined
+
+    - name: Cleanup async attacker task
+      async_status:
+        jid: "{{ attack_async.ansible_job_id }}"
+        mode: cleanup
+      become: yes
+      when: inventory_hostname in groups['active_attackers'] and attack_async is defined
+
+- hosts: server
+  gather_facts: no
+  tasks:
+  - name: restart jitsi
+    shell: "{{ user_dir }}/common/jitsi/restarter.sh"
+  become: yes
+
+- hosts: server, router, sink, active_clients, active_attackers
+  gather_facts: no
+  tasks:
+  - name: wait for logging to finish
+    pause:
+      seconds: "{{ cleanup_delay }}"
+  - name: compress logs
+    archive:
+      path: /tmp/logs
+      dest: /tmp/logs.zip
+      format: zip
+    ignore_errors: yes
+  - name: collect logs
+    fetch:
+      src: /tmp/logs.zip
+      dest: "{{ user_dir }}/logs/{{ session }}/{{ timestamp }}/{{ inventory_hostname }}/MA/"
+      flat: yes
+    ignore_errors: yes
 
 - import_playbook: "mitigations/{{ mitigation }}_disable.yml"
 
@@ -385,8 +390,8 @@
       loop:
         - "UB"
         - "UA"
-        # - "MB"
-        # - "MA"
+        - "MB"
+        - "MA"
       delegate_to: localhost
       ignore_errors: yes
     - name: delete zip files
@@ -396,8 +401,8 @@
       loop:
         - "UB"
         - "UA"
-        # - "MB"
-        # - "MA"
+        - "MB"
+        - "MA"
       become: yes
       delegate_to: localhost
     # - name: copy fact files
