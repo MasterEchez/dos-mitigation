@@ -57,7 +57,7 @@ async function openHTML(filePath) {
     let recorder;
     if (recordBool) {
         recorder = new PuppeteerScreenRecorder(page);
-        await recorder.start("join-meeting.mp4");
+        await recorder.start(`join-and-log-start_${expStartDateTime}-window_${windowLengthNum}.mp4`.replace(/\s+/g, '').replace(/[()]/g, ''));
     }
 
     try {
