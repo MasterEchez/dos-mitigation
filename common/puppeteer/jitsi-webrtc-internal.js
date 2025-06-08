@@ -75,33 +75,77 @@ async function openHTML(filePath) {
 
 
         await new Promise(resolve => setTimeout(resolve, 1000));
+        await iframe.waitForFunction(() => APP && APP.conference && APP.conference.isJoined());
 
-        while (Date.now() < fromNow) {
-            console.log(Date().toString());
-            try {
-                // const vars = await iframe.evaluate( () => {
-                //     const allVariables = [];
-                //     allVariables.push(['stats', APP.conference.getStats()]);
-                //     allVariables.push(['connection state', APP.conference._room.getConnectionState()]);
-                //     return allVariables;
-                // });
-                // vars.forEach(ele => console.log(ele[0], ele[1]));
+        const statsHistory = await iframe.evaluate( async (fromNow) => {
+            const pc = APP.conference._room.jvbJingleSession.peerconnection;
+            const interval = 500; // .5 seconds
+            let lastStats = {};
+            const statsHistory = [];
 
-                const vars = await iframe.evaluate( () => {
-                    const allVariables = [];
-                    for (const key in APP.conference._room.jvbJingleSession.peerconnection) {
-                        // allVariables.push(typeof key);
-                        allVariables.push(key, typeof APP[key]);
+            const collectStats = async () => {
+                const now = Date.now();
+                const report = await pc.getStats();
+                const parsed = { time: now, inbound: {}, outbound: {} };
+                report.forEach(stat => {
+                    if ((stat.type === 'inbound-rtp' || stat.type === 'outbound-rtp') && stat.kind === 'video') {
+                        const direction = stat.type === 'inbound-rtp' ? 'inbound' : 'outbound';
+                        const id = stat.id;
+                        
+                        const bytesKey = `${id}_bytes`;
+                        const timeKey = `${id}_time`;
+
+                        const bytes = stat.bytesReceived || stat.bytesSent || 0;
+                        const lastBytes = lastStats[bytesKey] || bytes;
+                        const lastTime = lastStats[timeKey] || now;
+
+                        const deltaTimeSec = (now - lastTime) / 1000;
+                        const deltaBytes = bytes - lastBytes;
+                        const bitrateKbps = deltaTimeSec > 0 ? (deltaBytes * 8) / deltaTimeSec / 1000 : 0;
+                        
+                        parsed[direction][id] = {
+                            bitrateKbps,
+                            framesPerSecond: stat.framesPerSecond,
+                            packetsSent: stat.packetsSent,
+                            packetsReceived: stat.packetsReceived,
+                            packetsLost: stat.packetsLost,
+                            bytes
+                        };
+
+                        // update lastStats
+                        lastStats[bytesKey] = bytes;
+                        lastStats[timeKey] = now;
                     }
-                    return allVariables;
                 });
+                statsHistory.push(parsed);
+            };
 
-                vars.forEach( ele => console.log(ele));
-            } catch (e) {
-                console.log(e);
+            const statsInterval = setInterval(collectStats, interval);
+
+            while (Date.now() < fromNow) {
+                console.log(Date().toString());
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+
+            
+            clearInterval(statsInterval);
+            return statsHistory;
+        }, fromNow);
+
+        // while (Date.now() < fromNow) {
+        //     console.log(Date().toString());
+        //     await new Promise(resolve => setTimeout(resolve, 1000));
+        // }
+
+        // Later: stop collecting
+        // clearInterval(statsInterval);
+
+        // const statsHistory = await iframe.evaluate( () => {
+        //     clearInterval(statsInterval);
+        //     return statsHistory;
+        // });
+
+        // console.log(statsHistory);
 
         // const vars = await iframe.evaluate( () => {
         //     const allVariables = [];
@@ -110,7 +154,7 @@ async function openHTML(filePath) {
         //     return allVariables;
         // });
 
-        // vars.forEach(ele => console.log(ele));
+        statsHistory.forEach(ele => console.log(ele));
 
     } catch (e) {
         console.log(e);
