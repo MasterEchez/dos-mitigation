@@ -75,7 +75,7 @@ async function openHTML(filePath) {
 
 
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await iframe.waitForFunction(() => APP && APP.conference && APP.conference.isJoined());
+        await iframe.waitForFunction(() => APP && APP.conference && APP.conference._room.jvbJingleSession.peerconnection);
 
         const statsHistory = await iframe.evaluate( async (fromNow) => {
             const pc = APP.conference._room.jvbJingleSession.peerconnection;
@@ -86,9 +86,13 @@ async function openHTML(filePath) {
             const collectStats = async () => {
                 const now = Date.now();
                 const report = await pc.getStats();
-                const parsed = { time: now, inbound: {}, outbound: {} };
+                const rtcStats = { time: now, inbound: {}, outbound: {} };
                 report.forEach(stat => {
-                    if ((stat.type === 'inbound-rtp' || stat.type === 'outbound-rtp') && stat.kind === 'video') {
+                    if (
+                        (stat.type === "inbound-rtp" || stat.type === "outbound-rtp") &&
+                        stat.kind === "video" &&
+                        stat.framesPerSecond !== undefined
+                    ) {
                         const direction = stat.type === 'inbound-rtp' ? 'inbound' : 'outbound';
                         const id = stat.id;
                         
@@ -103,7 +107,7 @@ async function openHTML(filePath) {
                         const deltaBytes = bytes - lastBytes;
                         const bitrateKbps = deltaTimeSec > 0 ? (deltaBytes * 8) / deltaTimeSec / 1000 : 0;
                         
-                        parsed[direction][id] = {
+                        rtcStats[direction] = {
                             bitrateKbps,
                             framesPerSecond: stat.framesPerSecond,
                             packetsSent: stat.packetsSent,
@@ -117,7 +121,7 @@ async function openHTML(filePath) {
                         lastStats[timeKey] = now;
                     }
                 });
-                statsHistory.push(parsed);
+                statsHistory.push(rtcStats);
             };
 
             const statsInterval = setInterval(collectStats, interval);
