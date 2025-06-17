@@ -85,8 +85,20 @@ async function openHTML(filePath) {
 
             const collectStats = async () => {
                 const now = Date.now();
-                const report = await pc.getStats();
-                const rtcStats = { time: now, inbound: {}, outbound: {} };
+                const reportPromise = pc.getStats();
+                const jitsiStats = APP.conference.getStats();
+                const report = await reportPromise;
+                const stats = { 
+                    time: now,
+                    jitsi_jvb_rtt: jitsiStats.jvbRTT,
+                    jitsi_bandwidth_download: jitsiStats.bandwidth.download,
+                    jitsi_bandwidth_upload: jitsiStats.bandwidth.upload,
+                    jitsi_bitrate_download: jitsiStats.bitrate.download,
+                    jitsi_bitrate_upload: jitsiStats.bitrate.upload,
+                    jitsi_packetloss_total: jitsiStats.packetLoss.total,
+                    jitsi_packetloss_download: jitsiStats.packetLoss.download,
+                    jitsi_packetloss_upload: jitsiStats.packetLoss.upload,
+                };
                 report.forEach(stat => {
                     if (
                         (stat.type === "inbound-rtp" || stat.type === "outbound-rtp") &&
@@ -107,21 +119,30 @@ async function openHTML(filePath) {
                         const deltaBytes = bytes - lastBytes;
                         const bitrateKbps = deltaTimeSec > 0 ? (deltaBytes * 8) / deltaTimeSec / 1000 : 0;
                         
-                        rtcStats[direction] = {
-                            bitrateKbps,
-                            framesPerSecond: stat.framesPerSecond,
-                            packetsSent: stat.packetsSent,
-                            packetsReceived: stat.packetsReceived,
-                            packetsLost: stat.packetsLost,
-                            bytes
-                        };
+                        [["bitrateKbps", bitrateKbps],
+                        ["framesPerSecond", stat.framesPerSecond],
+                        ["packetsSent", stat.packetsSent],
+                        ["packetsReceived", stat.packetsReceived],
+                        ["packetsLost", stat.packetsLost],
+                        ["bytes", bytes]].map((pair) => {
+                            stats[`rtc_${pair[0]}_${direction}`] = pair[1];
+                        });
+
+                        // stats[`rtc_stat_${direction}`] = {
+                        //     bitrateKbps,
+                        //     framesPerSecond: stat.framesPerSecond,
+                        //     packetsSent: stat.packetsSent,
+                        //     packetsReceived: stat.packetsReceived,
+                        //     packetsLost: stat.packetsLost,
+                        //     bytes
+                        // };
 
                         // update lastStats
                         lastStats[bytesKey] = bytes;
                         lastStats[timeKey] = now;
                     }
                 });
-                statsHistory.push(rtcStats);
+                statsHistory.push(stats);
             };
 
             const statsInterval = setInterval(collectStats, interval);
