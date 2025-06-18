@@ -105,7 +105,7 @@ async function openHTML(filePath) {
                         stat.kind === "video" &&
                         stat.framesPerSecond !== undefined
                     ) {
-                        const direction = stat.type === 'inbound-rtp' ? 'inbound' : 'outbound';
+                        const direction = stat.type === 'inbound-rtp' ? 'download' : 'upload';
                         const id = stat.id;
                         
                         const bytesKey = `${id}_bytes`;
