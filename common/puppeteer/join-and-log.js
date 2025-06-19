@@ -73,7 +73,6 @@ async function openHTML(filePath) {
         //     return document.body.innerHTML;
         // });
         // console.log(html);
-        const logs = [];
         await iframe.type('#premeeting-name-input', clientName);
         await iframe.click('.primary');
 
@@ -82,19 +81,85 @@ async function openHTML(filePath) {
             await new Promise(resolve => setTimeout(resolve, 200));
         }
 
-        while (Date.now() < expEndDateTime) {
-            const time = Date.now();
-            // console.log(time);
-            try {
-                stats = await iframe.evaluate(  () => {
-                    return APP.conference.getStats();
+        const logs = await iframe.evaluate( async (expEndTimeStamp) => {
+            const pc = APP.conference._room.jvbJingleSession.peerconnection;
+            const interval = 500; // .5 seconds
+            let lastStats = {};
+            const statsHistory = [];
+
+            const collectStats = async () => {
+                const now = Date.now();
+                const reportPromise = pc.getStats();
+                const jitsiStats = APP.conference.getStats();
+                const report = await reportPromise;
+                const stats = { 
+                    time: now,
+                    jitsi_jvb_rtt: jitsiStats.jvbRTT,
+                    jitsi_bandwidth_download: jitsiStats.bandwidth.download,
+                    jitsi_bandwidth_upload: jitsiStats.bandwidth.upload,
+                    jitsi_bitrate_download: jitsiStats.bitrate.download,
+                    jitsi_bitrate_upload: jitsiStats.bitrate.upload,
+                    jitsi_packetloss_total: jitsiStats.packetLoss.total,
+                    jitsi_packetloss_download: jitsiStats.packetLoss.download,
+                    jitsi_packetloss_upload: jitsiStats.packetLoss.upload,
+                };
+                report.forEach(stat => {
+                    if (
+                        (stat.type === "inbound-rtp" || stat.type === "outbound-rtp") &&
+                        stat.kind === "video" &&
+                        stat.framesPerSecond !== undefined
+                    ) {
+                        const direction = stat.type === 'inbound-rtp' ? 'download' : 'upload';
+                        const id = stat.id;
+                        
+                        const bytesKey = `${id}_bytes`;
+                        const timeKey = `${id}_time`;
+
+                        const bytes = stat.bytesReceived || stat.bytesSent || 0;
+                        const lastBytes = lastStats[bytesKey] || bytes;
+                        const lastTime = lastStats[timeKey] || now;
+
+                        const deltaTimeSec = (now - lastTime) / 1000;
+                        const deltaBytes = bytes - lastBytes;
+                        const bitrateKbps = deltaTimeSec > 0 ? (deltaBytes * 8) / deltaTimeSec / 1000 : 0;
+                        
+                        [["bitrateKbps", bitrateKbps],
+                        ["framesPerSecond", stat.framesPerSecond],
+                        ["packetsSent", stat.packetsSent],
+                        ["packetsReceived", stat.packetsReceived],
+                        ["packetsLost", stat.packetsLost],
+                        ["bytes", bytes]].map((pair) => {
+                            stats[`rtc_${pair[0]}_${direction}`] = pair[1];
+                        });
+
+                        // stats[`rtc_stat_${direction}`] = {
+                        //     bitrateKbps,
+                        //     framesPerSecond: stat.framesPerSecond,
+                        //     packetsSent: stat.packetsSent,
+                        //     packetsReceived: stat.packetsReceived,
+                        //     packetsLost: stat.packetsLost,
+                        //     bytes
+                        // };
+
+                        // update lastStats
+                        lastStats[bytesKey] = bytes;
+                        lastStats[timeKey] = now;
+                    }
                 });
-                logs.push({time, stats});
-            } catch (e) {
-                console.log(e);
+                statsHistory.push(stats);
+            };
+
+            const statsInterval = setInterval(collectStats, interval);
+
+            while (Date.now() < expEndTimeStamp) {
+                console.log(Date().toString());
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
+
+            
+            clearInterval(statsInterval);
+            return statsHistory;
+        }, expEndDateTime.getTime());
 
         // console.log(logs);
         // console.log(logs[0]);
@@ -102,20 +167,21 @@ async function openHTML(filePath) {
         // console.log(logs.length);
 
         // console.log(logs.filter( (value) => value.stats.transport !== undefined && value.stats.transport.length !== 0).length);
-        const refinedLogs = logs.filter( (value) => value.stats.transport !== undefined && value.stats.transport.length !== 0)
-            .map( (value) => {
-                return {
-                    timestamp: value.time,
-                    jvb_rtt: value.stats.jvbRTT,
-                    bandwidth_download: value.stats.bandwidth.download,
-                    bandwidth_upload: value.stats.bandwidth.upload,
-                    bitrate_download: value.stats.bitrate.download,
-                    bitrate_upload: value.stats.bitrate.upload,
-                    packetloss_total: value.stats.packetLoss.total,
-                    packetloss_download: value.stats.packetLoss.download,
-                    packetloss_upload: value.stats.packetLoss.upload
-                }
-            });
+        const refinedLogs = logs;
+        // logs.filter( (value) => value.stats.transport !== undefined && value.stats.transport.length !== 0)
+        //     .map( (value) => {
+        //         return {
+        //             timestamp: value.time,
+        //             jvb_rtt: value.stats.jvbRTT,
+        //             bandwidth_download: value.stats.bandwidth.download,
+        //             bandwidth_upload: value.stats.bandwidth.upload,
+        //             bitrate_download: value.stats.bitrate.download,
+        //             bitrate_upload: value.stats.bitrate.upload,
+        //             packetloss_total: value.stats.packetLoss.total,
+        //             packetloss_download: value.stats.packetLoss.download,
+        //             packetloss_upload: value.stats.packetLoss.upload
+        //         }
+        //     });
 
         // console.log(refinedLogs[0]);
         // console.log(refinedLogs[refinedLogs.length-1]);
