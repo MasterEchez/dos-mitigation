@@ -37,7 +37,7 @@
     - name: Start Jitsi clients with sync timestamp
       shell: |
         . ~/.nvm/nvm.sh
-        node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
+        node puppeteer/join-and-log.js {{ inventory_hostname }} ./sinteltrailer.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
       async: "{{ total_async_time }}"
       poll: 0
       register: client_async
@@ -124,7 +124,7 @@
     - name: Start Jitsi clients with sync timestamp
       shell: |
         . ~/.nvm/nvm.sh
-        node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
+        node puppeteer/join-and-log.js {{ inventory_hostname }} ./sinteltrailer.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
       async: "{{ total_async_time }}"
       poll: 0
       register: client_async
@@ -218,7 +218,7 @@
     - name: Start Jitsi clients with sync timestamp
       shell: |
         . ~/.nvm/nvm.sh
-        node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
+        node puppeteer/join-and-log.js {{ inventory_hostname }} ./sinteltrailer.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
       async: "{{ total_async_time }}"
       poll: 0
       register: client_async
@@ -304,7 +304,7 @@
     - name: Start Jitsi clients with sync timestamp
       shell: |
         . ~/.nvm/nvm.sh
-        node puppeteer/join-and-log.js {{ inventory_hostname }} ./fourpeople.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
+        node puppeteer/join-and-log.js {{ inventory_hostname }} ./sinteltrailer.y4m {{ window_length }} "{{ hostvars['localhost'].sync_start_time }}" 0
       async: "{{ total_async_time }}"
       poll: 0
       register: client_async
