@@ -1,12 +1,11 @@
 {
   "attack_mitigation_pair": [
-    ["syn_flood", "syn_cookies"],
     ["syn_flood", "syn_pow_16"]
   ],
   "attackers_do_mitigation": [0, 1],
-  "bottleneck_latency": [1],
-  "bottleneck_loss": [0],
-  "bottleneck_capacity": [1000],
+  "bottleneck_latency": [-1],
+  "bottleneck_loss": [-1],
+  "bottleneck_capacity": [-1],
   "attacker_busywait": [0],
   "attacker_cpu_limit": [100],
   "n_clients": [2],
