@@ -12,9 +12,9 @@ server_name=s0
 sink_name=sink0
 
 client_duration=30
-pre_attack_delay=0
+pre_attack_delay=20
 attack_duration=30
 post_attack_delay=10
 cleanup_delay=30
-window_length=30
-exp_delay=15
+window_length=15
+exp_delay=20
