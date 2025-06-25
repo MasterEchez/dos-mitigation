@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import argparse
 
-def plot_graphs(session_name, hosts, output_dir):
+def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consolidate_scenarios=False):
     root_dir = "/usr/local/dos-mitigation/data"
     session_path = os.path.join(root_dir, session_name)
 
@@ -12,60 +12,185 @@ def plot_graphs(session_name, hosts, output_dir):
         print(f"Session path does not exist: {session_path}")
         return
 
-    # Discover experiment directories
     experiments = [exp for exp in os.listdir(session_path)
                    if os.path.isdir(os.path.join(session_path, exp))]
-    print(f"Discovered experiments: {experiments}")
-
     scenarios = ['MA', 'MB', 'UA', 'UB']
 
     for experiment in experiments:
         print(f"\nProcessing experiment: {experiment}")
-        for host in hosts:
+        # Copy .settings file
+        settings_path = os.path.join(session_path, experiment, ".settings")
+        if os.path.isfile(settings_path):
+            experiment_output_dir = os.path.join(output_dir, session_name, experiment)
+            os.makedirs(experiment_output_dir, exist_ok=True)
+            destination = os.path.join(experiment_output_dir, ".settings")
+            try:
+                import shutil
+                shutil.copy2(settings_path, destination)
+                print(f"Copied settings file to: {destination}")
+            except Exception as e:
+                print(f"Failed to copy settings file: {e}")
+        else:
+            print(f"Settings file not found: {settings_path}")
+
+
+        if consolidate_hosts:
             for scenario in scenarios:
-                csv_path = os.path.join(session_path, experiment, host, scenario, "logs", "jitsi.csv")
-
-                if not os.path.exists(csv_path):
-                    print(f"Missing: {csv_path}")
-                    continue
-
-                try:
+                all_data = []
+                for host in hosts:
+                    csv_path = os.path.join(session_path, experiment, host, scenario, "logs", "jitsi.csv")
+                    if not os.path.exists(csv_path):
+                        continue
                     df = pd.read_csv(csv_path)
-                except Exception as e:
-                    print(f"Failed to read {csv_path}: {e}")
+                    if 'timestamp' not in df.columns:
+                        continue
+                    df['timestamp'] = pd.to_datetime(df['timestamp'])
+                    df['host'] = host
+                    all_data.append(df)
+
+                if not all_data:
                     continue
 
-                if 'timestamp' not in df.columns:
-                    print(f"Missing 'timestamp' in {csv_path}")
-                    continue
+                merged_df = pd.concat(all_data)
 
-                df['timestamp'] = pd.to_datetime(df['timestamp'])
-
-                for col in df.columns:
-                    if col == 'timestamp':
+                for col in merged_df.columns:
+                    if col in ['timestamp', 'host']:
                         continue
 
                     plt.figure(figsize=(10, 6))
-                    plt.plot(df['timestamp'], df[col], label=col)
-                    plt.xlabel('Timestamp')
+                    for host, group in merged_df.groupby('host'):
+                        plt.plot(group['timestamp'], group[col], label=host)
+                    plt.xlabel('time')
                     plt.ylabel(col)
-                    plt.title(f'{col} vs Timestamp\n{host} - {scenario} - {experiment}')
+                    plt.title(f'{col} across hosts\nScenario: {scenario} - Experiment: {experiment}')
+                    plt.legend()
                     plt.xticks(rotation=45)
-
-                    # Format timestamps as HH:mm:ss.SSS
                     ax = plt.gca()
-                    ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S.%f'))
+                    ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+
+                    xlims = ax.get_xlim()
+                    x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
+                    x2_3 = xlims[0] + 2 * (xlims[1] - xlims[0]) / 3
+                    ax.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
+                    ax.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
                     plt.tight_layout()
 
-                    # Output path
-                    experiment_output = os.path.join(output_dir, session_name, experiment)
-                    os.makedirs(experiment_output, exist_ok=True)
-                    file_name = f"{host}_{scenario}_{col}.png"
-                    output_path = os.path.join(experiment_output, file_name)
-
+                    out_dir = os.path.join(output_dir, session_name, experiment)
+                    os.makedirs(out_dir, exist_ok=True)
+                    output_path = os.path.join(out_dir, f"consolidated_hosts_{scenario}_{col}.png")
                     plt.savefig(output_path)
                     plt.close()
                     print(f"Saved: {output_path}")
+
+        elif consolidate_scenarios:
+            for host in hosts:
+                all_data = []
+                for scenario in scenarios:
+                    csv_path = os.path.join(session_path, experiment, host, scenario, "logs", "jitsi.csv")
+                    if not os.path.exists(csv_path):
+                        continue
+                    try:
+                        df = pd.read_csv(csv_path)
+                    except Exception as e:
+                        print(f"Failed to read {csv_path}: {e}")
+                        continue
+
+                    if 'timestamp' not in df.columns:
+                        print(f"Missing 'timestamp' in {csv_path}")
+                        continue
+
+                    df['timestamp'] = pd.to_datetime(df['timestamp'])
+                    df['scenario'] = scenario
+                    all_data.append(df)
+
+                if not all_data:
+                    continue
+
+                merged_df = pd.concat(all_data)
+
+                # Normalize time per scenario
+                merged_df['relative_time'] = merged_df.groupby('scenario')['timestamp'].transform(
+                    lambda x: (x - x.min()).dt.total_seconds()
+                )
+
+                # Plot each metric across scenarios
+                for col in merged_df.columns:
+                    if col in ['timestamp', 'relative_time', 'scenario']:
+                        continue
+
+                    plt.figure(figsize=(10, 6))
+                    for scenario, group in merged_df.groupby('scenario'):
+                        plt.plot(group['relative_time'], group[col], label=scenario)
+
+                    plt.xlabel('Relative Time (seconds)')
+                    plt.ylabel(col)
+                    plt.title(f'{col} across scenarios (relative time)\nHost: {host} - Experiment: {experiment}')
+                    plt.legend()
+                    xlims = plt.xlim()
+                    x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
+                    x2_3 = xlims[0] + 2 * (xlims[1] - xlims[0]) / 3
+                    plt.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
+                    plt.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
+                    plt.tight_layout()
+
+                    out_dir = os.path.join(output_dir, session_name, experiment)
+                    os.makedirs(out_dir, exist_ok=True)
+                    output_path = os.path.join(out_dir, f"consolidated_scenarios_{host}_{col}.png")
+                    plt.savefig(output_path)
+                    plt.close()
+                    print(f"Saved: {output_path}")
+        else:
+            # Original non-consolidated plotting logic
+            for host in hosts:
+                for scenario in scenarios:
+                    csv_path = os.path.join(session_path, experiment, host, scenario, "logs", "jitsi.csv")
+                    if not os.path.exists(csv_path):
+                        print(f"Missing: {csv_path}")
+                        continue
+
+                    try:
+                        df = pd.read_csv(csv_path)
+                    except Exception as e:
+                        print(f"Failed to read {csv_path}: {e}")
+                        continue
+
+                    if 'timestamp' not in df.columns:
+                        print(f"Missing 'timestamp' in {csv_path}")
+                        continue
+
+                    df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+                    for col in df.columns:
+                        if col == 'timestamp':
+                            continue
+
+                        plt.figure(figsize=(10, 6))
+                        plt.plot(df['timestamp'], df[col], label=col)
+                        plt.xlabel('time')
+                        plt.ylabel(col)
+                        plt.title(f'{col} vs time\n{host} - {scenario} - {experiment}')
+                        plt.xticks(rotation=45)
+
+                        ax = plt.gca()
+                        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S.%f'))
+
+                        xlims = ax.get_xlim()
+                        x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
+                        x2_3 = xlims[0] + 2 * (xlims[1] - xlims[0]) / 3
+                        ax.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
+                        ax.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
+
+                        plt.tight_layout()
+
+                        experiment_output = os.path.join(output_dir, session_name, experiment)
+                        os.makedirs(experiment_output, exist_ok=True)
+                        file_name = f"{host}_{scenario}_{col}.png"
+                        output_path = os.path.join(experiment_output, file_name)
+
+                        plt.savefig(output_path)
+                        plt.close()
+                        print(f"Saved: {output_path}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Plot Jitsi logs grouped by experiment.")
@@ -73,10 +198,17 @@ def main():
     parser.add_argument('hosts', type=str, help='Comma-separated host names (e.g., c0,c1,c2)')
     parser.add_argument('--output_dir', type=str, default='jitsi_graphs',
                         help='Where to store generated PNGs (default: jitsi_graphs)')
+    parser.add_argument('--consolidate_hosts', action='store_true',
+                        help='Plot all hosts together in one graph per scenario')
+    parser.add_argument('--consolidate_scenarios', action='store_true',
+                        help='Plot all scenarios together in one graph per host')
 
     args = parser.parse_args()
     hosts = args.hosts.split(',')
-    plot_graphs(args.session_name, hosts, args.output_dir)
+    plot_graphs(args.session_name, hosts, args.output_dir,
+                consolidate_hosts=args.consolidate_hosts,
+                consolidate_scenarios=args.consolidate_scenarios)
+
 
 if __name__ == "__main__":
     main()
