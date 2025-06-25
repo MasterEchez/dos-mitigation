@@ -93,7 +93,7 @@ async function openHTML(filePath) {
                 const jitsiStats = APP.conference.getStats();
                 const report = await reportPromise;
                 const stats = { 
-                    time: now,
+                    timestamp: now,
                     jitsi_jvb_rtt: jitsiStats.jvbRTT,
                     jitsi_bandwidth_download: jitsiStats.bandwidth.download,
                     jitsi_bandwidth_upload: jitsiStats.bandwidth.upload,
