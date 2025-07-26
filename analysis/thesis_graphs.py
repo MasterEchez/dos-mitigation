@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 import argparse
+import datetime
 
 def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consolidate_scenarios=False):
     root_dir = "/usr/local/dos-mitigation/data"
@@ -184,9 +185,8 @@ def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consol
                             diff = y_view_max - y_view_min
                             ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
 
-                        xlims = ax.get_xlim()
-                        x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
-                        x2_3 = xlims[0] + 2 * (xlims[1] - xlims[0]) / 3
+                        x1_3 = df['timestamp_from_start'][0] + datetime.timedelta(seconds=15)
+                        x2_3 = df['timestamp_from_start'][0] + datetime.timedelta(seconds=30)
                         ax.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
                         ax.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
 
@@ -223,9 +223,8 @@ def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consol
                         diff = y_view_max - y_view_min
                         ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
 
-                        xlims = ax.get_xlim()
-                        x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
-                        x2_3 = xlims[0] + 2 * (xlims[1] - xlims[0]) / 3
+                        x1_3 = df['timestamp_from_start'][0] + datetime.timedelta(seconds=15)
+                        x2_3 = df['timestamp_from_start'][0] + datetime.timedelta(seconds=30)
                         ax.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
                         ax.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
 
@@ -255,9 +254,8 @@ def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consol
                         diff = y_view_max - y_view_min
                         ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
 
-                        xlims = ax.get_xlim()
-                        x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
-                        x2_3 = xlims[0] + 2 * (xlims[1] - xlims[0]) / 3
+                        x1_3 = df['timestamp_from_start'][0] + datetime.timedelta(seconds=15)
+                        x2_3 = df['timestamp_from_start'][0] + datetime.timedelta(seconds=30)
                         ax.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
                         ax.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
 
