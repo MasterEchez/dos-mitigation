@@ -170,15 +170,16 @@ def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consol
 
                         plt.figure(figsize=(10, 6))
                         plt.plot(df['timestamp_from_start'], df[col], label=col)
-                        plt.xlabel('time')
+                        plt.xlabel('time from experiment start')
                         plt.ylabel(col)
-                        plt.title(f'{col} vs time\n{host} - {scenario} - {experiment}')
+                        plt.title(f'{col} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                         plt.xticks(rotation=45)
 
                         ax = plt.gca()
                         ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
                         if 'jitsi_packetloss' in col:
                             ax.set_ylim(0,100.5)
+                            plt.ylabel(col + " (percent)")
                         else:
                             y_view_min = min(0,df[col].min())
                             y_view_max = df[col].max()
@@ -210,10 +211,10 @@ def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consol
                         plt.figure(figsize=(10, 6))
                         plt.plot(df['timestamp_from_start'], df[upload], label=upload)
                         plt.plot(df['timestamp_from_start'], df[download], label=download)
-                        plt.xlabel('time')
+                        plt.xlabel('time from experiment start')
                         plt.ylabel(name)
                         plt.legend()
-                        plt.title(f'{name} vs time\n{host} - {scenario} - {experiment}')
+                        plt.title(f'{name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                         plt.xticks(rotation=45)
 
                         ax = plt.gca()
@@ -241,10 +242,10 @@ def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consol
 
                         plt.figure(figsize=(10, 6))
                         plt.plot(df['timestamp_from_start'], df[upload] - df[download], label=f"{name}_diff")
-                        plt.xlabel('time')
+                        plt.xlabel('time from experiment start')
                         plt.ylabel(name)
                         plt.legend()
-                        plt.title(f'{name} vs time\n{host} - {scenario} - {experiment}')
+                        plt.title(f'Upload minus Download {name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                         plt.xticks(rotation=45)
 
                         ax = plt.gca()
