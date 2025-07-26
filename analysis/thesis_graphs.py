@@ -176,6 +176,13 @@ def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consol
 
                         ax = plt.gca()
                         ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
+                        if 'jitsi_packetloss' in col:
+                            ax.set_ylim(0,100.5)
+                        else:
+                            y_view_min = min(0,df[col].min())
+                            y_view_max = df[col].max()
+                            diff = y_view_max - y_view_min
+                            ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
 
                         xlims = ax.get_xlim()
                         x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
@@ -211,6 +218,10 @@ def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consol
 
                         ax = plt.gca()
                         ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
+                        y_view_min = min(0,df[upload].min(), df[download].min())
+                        y_view_max = max(df[upload].max(), df[download].max())
+                        diff = y_view_max - y_view_min
+                        ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
 
                         xlims = ax.get_xlim()
                         x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
@@ -239,6 +250,10 @@ def plot_graphs(session_name, hosts, output_dir, consolidate_hosts=False, consol
 
                         ax = plt.gca()
                         ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
+                        y_view_min = min(0,(df[upload] - df[download]).min())
+                        y_view_max = max(0, (df[upload] - df[download]).max())
+                        diff = y_view_max - y_view_min
+                        ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
 
                         xlims = ax.get_xlim()
                         x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
