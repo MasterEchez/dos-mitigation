@@ -6,7 +6,7 @@ import matplotlib.ticker as mticker
 import argparse
 import datetime
 
-def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, quality_of_service=False):
+def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, consolidate_scenarios=False, quality_of_service=False):
     root_dir = "/usr/local/dos-mitigation/data"
     for session_name in session_names:
         session_path = os.path.join(root_dir, session_name)
@@ -97,6 +97,65 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, quali
                         plt.savefig(output_path)
                         plt.close()
                         print(f"Saved: {output_path}")
+
+            elif consolidate_scenarios:
+                for host in hosts:
+                    all_data = []
+                    for scenario in scenarios:
+                        csv_path = os.path.join(session_path, experiment, host, scenario, "logs", "jitsi.csv")
+                        if not os.path.exists(csv_path):
+                            continue
+                        try:
+                            df = pd.read_csv(csv_path)
+                        except Exception as e:
+                            print(f"Failed to read {csv_path}: {e}")
+                            continue
+
+                        if 'timestamp' not in df.columns:
+                            print(f"Missing 'timestamp' in {csv_path}")
+                            continue
+
+                        df['timestamp'] = pd.to_datetime(df['timestamp'], unit="ms")
+                        df['scenario'] = scenario
+                        all_data.append(df)
+
+                    if not all_data:
+                        continue
+
+                    merged_df = pd.concat(all_data)
+
+                    # Normalize time per scenario
+                    merged_df['relative_time'] = merged_df.groupby('scenario')['timestamp'].transform(
+                        lambda x: (x - x.min()).dt.total_seconds()
+                    )
+
+                    # Plot each metric across scenarios
+                    for col in merged_df.columns:
+                        if col in ['timestamp', 'relative_time', 'scenario']:
+                            continue
+
+                        plt.figure(figsize=(10, 6))
+                        for scenario, group in merged_df.groupby('scenario'):
+                            plt.plot(group['relative_time'], group[col], label=scenario)
+
+                        plt.xlabel('Relative Time (seconds)')
+                        plt.ylabel(col)
+                        plt.title(f'{col} across scenarios (relative time)\nHost: {host} - Experiment: {experiment}')
+                        plt.legend()
+                        xlims = plt.xlim()
+                        x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
+                        x2_3 = xlims[0] + 2 * (xlims[1] - xlims[0]) / 3
+                        plt.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
+                        plt.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
+                        plt.tight_layout()
+
+                        out_dir = os.path.join(output_dir, session_name, experiment)
+                        os.makedirs(out_dir, exist_ok=True)
+                        output_path = os.path.join(out_dir, f"consolidated_scenarios_{host}_{col}.png")
+                        plt.savefig(output_path)
+                        plt.close()
+                        print(f"Saved: {output_path}")
+            
             elif quality_of_service:
                 pass
             else:
@@ -237,14 +296,17 @@ def main():
                         help='Where to store generated PNGs (default: thesis_graphs)')
     parser.add_argument('--consolidate_hosts', action='store_true',
                         help='Plot all hosts together in one graph per scenario')
+    parser.add_argument('--consolidate_scenarios', action='store_true',
+                        help='Plot all scenarios together in one graph per host')
     parser.add_argument('--qos', action='store_true',
-                        help='Plot quality of service graphs + Output values')
+                        help='Plot quality of service graphs + output values')
 
     args = parser.parse_args()
     hosts = args.hosts.split(',')
     session_names = args.session_names.split(',')
     plot_graphs(session_names, hosts, args.output_dir,
                 consolidate_hosts=args.consolidate_hosts,
+                consolidate_scenarios=args.consolidate_scenarios,
                 quality_of_service=args.qos)
 
 
