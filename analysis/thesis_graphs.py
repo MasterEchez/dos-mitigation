@@ -48,6 +48,8 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                         df = pd.read_csv(csv_path)
                         if 'timestamp' not in df.columns:
                             continue
+                        df['ms_from_start'] = df['timestamp'] - df['timestamp'].min()
+                        df['timestamp_from_start'] = pd.to_datetime(df['ms_from_start'], unit="ms")
                         df['timestamp'] = pd.to_datetime(df['timestamp'], unit="ms")
                         df['host'] = host
                         all_data.append(df)
@@ -58,30 +60,40 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                     merged_df = pd.concat(all_data)
 
                     for col in merged_df.columns:
-                        if col in ['timestamp', 'host']:
+                        if col in ['timestamp', 'host', 'ms_from_start', 'timestamp_from_start']:
                             continue
 
                         plt.figure(figsize=(10, 6))
+                        y_view_max = float('-inf')
+                        y_view_min = float('inf')
                         for host, group in merged_df.groupby('host'):
-                            plt.plot(group['timestamp'], group[col], label=host)
-                        plt.xlabel('time')
+                            plt.plot(group['timestamp_from_start'], group[col], label=host)
+                            ax = plt.gca()
+                            x1_3 = group['timestamp_from_start'][0] + datetime.timedelta(seconds=15)
+                            x2_3 = group['timestamp_from_start'][0] + datetime.timedelta(seconds=30)
+                            ax.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
+                            ax.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
+                            
+                            if 'jitsi_packetloss' in col:
+                                ax.set_ylim(0,100.5)
+                                plt.ylabel(col + " (percent)")
+                            else:
+                                y_view_min = min(0,group[col].min(), y_view_min)
+                                y_view_max = max(group[col].max(), y_view_max)
+                                diff = y_view_max - y_view_min
+                                ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
+                        plt.xlabel('time from experiment start')
                         plt.ylabel(col)
-                        plt.title(f'{col} across hosts\nScenario: {scenario} - Experiment: {experiment}')
+                        plt.title(f'{col} across hosts\nScenario: {scenario} - experiment: {experiment}')
                         plt.legend()
                         plt.xticks(rotation=45)
                         ax = plt.gca()
-                        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
-
-                        xlims = ax.get_xlim()
-                        x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
-                        x2_3 = xlims[0] + 2 * (xlims[1] - xlims[0]) / 3
-                        ax.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
-                        ax.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
+                        ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
                         plt.tight_layout()
 
-                        out_dir = os.path.join(output_dir, session_name, experiment)
+                        out_dir = os.path.join(output_dir, session_name, experiment, f"hosts_{"_".join(hosts)}", scenario)
                         os.makedirs(out_dir, exist_ok=True)
-                        output_path = os.path.join(out_dir, f"consolidated_hosts_{scenario}_{col}.png")
+                        output_path = os.path.join(out_dir, f"{col}.png")
                         plt.savefig(output_path)
                         plt.close()
                         print(f"Saved: {output_path}")
