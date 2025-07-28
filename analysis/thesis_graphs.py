@@ -6,6 +6,11 @@ import matplotlib.ticker as mticker
 import argparse
 import datetime
 
+def format_seconds_to_mm_ss(x, pos):
+    minutes = int(x // 60)
+    seconds = int(x % 60)
+    return f"{minutes:02d}:{seconds:02d}"
+
 def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, consolidate_scenarios=False, quality_of_service=False):
     root_dir = "/usr/local/dos-mitigation/data"
     if quality_of_service:
@@ -138,23 +143,36 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             continue
 
                         plt.figure(figsize=(10, 6))
+                        y_view_max = float('-inf')
+                        y_view_min = float('inf')
                         for scenario, group in merged_df.groupby('scenario'):
                             plt.plot(group['relative_time'], group[col], label=scenario)
+                            ax = plt.gca()
+                            if 'jitsi_packetloss' in col:
+                                ax.set_ylim(0,100.5)
+                                plt.ylabel(col + " (percent)")
+                            else:
+                                y_view_min = min(0,group[col].min(), y_view_min)
+                                y_view_max = max(group[col].max(), y_view_max)
+                                diff = y_view_max - y_view_min
+                                ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
+                                plt.ylabel(col)
 
-                        plt.xlabel('Relative Time (seconds)')
-                        plt.ylabel(col)
-                        plt.title(f'{col} across scenarios (relative time)\nHost: {host} - Experiment: {experiment}')
+                        plt.xlabel('time from experiment start')
+                        plt.title(f'{col} across scenarios \nHost: {host} - experiment: {experiment}')
                         plt.legend()
+                        ax = plt.gca()
+                        ax.xaxis.set_major_formatter(mticker.FuncFormatter(format_seconds_to_mm_ss))
                         xlims = plt.xlim()
-                        x1_3 = xlims[0] + (xlims[1] - xlims[0]) / 3
-                        x2_3 = xlims[0] + 2 * (xlims[1] - xlims[0]) / 3
+                        x1_3 = 15 # secs
+                        x2_3 = 30 # secs
                         plt.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
                         plt.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
                         plt.tight_layout()
-
-                        out_dir = os.path.join(output_dir, session_name, experiment)
+                        
+                        out_dir = os.path.join(output_dir, session_name, experiment, "4_scenarios", host)
                         os.makedirs(out_dir, exist_ok=True)
-                        output_path = os.path.join(out_dir, f"consolidated_scenarios_{host}_{col}.png")
+                        output_path = os.path.join(out_dir, f"{col}.png")
                         plt.savefig(output_path)
                         plt.close()
                         print(f"Saved: {output_path}")
