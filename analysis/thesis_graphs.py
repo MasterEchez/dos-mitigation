@@ -90,8 +90,8 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                                 y_view_max = max(group[col].max(), y_view_max)
                                 diff = y_view_max - y_view_min
                                 ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
+                                plt.ylabel(col)
                         plt.xlabel('time from experiment start')
-                        plt.ylabel(col)
                         plt.title(f'{col} across hosts\nScenario: {scenario} - experiment: {experiment}')
                         plt.legend()
                         plt.xticks(rotation=45)
