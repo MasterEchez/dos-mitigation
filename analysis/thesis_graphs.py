@@ -8,6 +8,9 @@ import datetime
 
 def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, consolidate_scenarios=False, quality_of_service=False):
     root_dir = "/usr/local/dos-mitigation/data"
+    if quality_of_service:
+        
+        return
     for session_name in session_names:
         session_path = os.path.join(root_dir, session_name)
 
@@ -156,8 +159,6 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                         plt.close()
                         print(f"Saved: {output_path}")
             
-            elif quality_of_service:
-                pass
             else:
                 for host in hosts:
                     for scenario in scenarios:
