@@ -11,11 +11,8 @@ def format_seconds_to_mm_ss(x, pos):
     seconds = int(x % 60)
     return f"{minutes:02d}:{seconds:02d}"
 
-def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, consolidate_scenarios=False, quality_of_service=False):
+def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, consolidate_scenarios=False):
     root_dir = "/usr/local/dos-mitigation/data"
-    if quality_of_service:
-        
-        return
     for session_name in session_names:
         session_path = os.path.join(root_dir, session_name)
 
@@ -320,16 +317,13 @@ def main():
                         help='Plot all hosts together in one graph per scenario')
     parser.add_argument('--consolidate_scenarios', action='store_true',
                         help='Plot all scenarios together in one graph per host')
-    parser.add_argument('--qos', action='store_true',
-                        help='Plot quality of service graphs + output values')
 
     args = parser.parse_args()
     hosts = args.hosts.split(',')
     session_names = args.session_names.split(',')
     plot_graphs(session_names, hosts, args.output_dir,
                 consolidate_hosts=args.consolidate_hosts,
-                consolidate_scenarios=args.consolidate_scenarios,
-                quality_of_service=args.qos)
+                consolidate_scenarios=args.consolidate_scenarios)
 
 
 if __name__ == "__main__":
