@@ -125,6 +125,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
 
                         df['timestamp'] = pd.to_datetime(df['timestamp'], unit="ms")
                         df['scenario'] = scenario
+                        df['jitsi_bandwidth_upload_minus_download'] = df['jitsi_bandwidth_upload'] - df['jitsi_bandwidth_download']
                         all_data.append(df)
 
                     if not all_data:
