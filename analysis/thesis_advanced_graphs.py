@@ -11,7 +11,7 @@ def format_seconds_to_mm_ss(x, pos):
     seconds = int(x % 60)
     return f"{minutes:02d}:{seconds:02d}"
 
-def plot_graphs(session_names, hosts, output_dir):
+def plot_graphs(session_names, hosts, output_dir, group_name):
     root_dir = "/usr/local/dos-mitigation/data"
     session_paths = [ os.path.join(root_dir, session_name) for session_name in session_names]
     
@@ -28,7 +28,7 @@ def plot_graphs(session_names, hosts, output_dir):
     # print(experiments_all)
 
     # write session names to directory
-    out_dir = os.path.join(output_dir, "advanced")
+    out_dir = os.path.join(output_dir, group_name)
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, "sessions.txt"), "w") as outfile:
         for session in session_names:
@@ -116,11 +116,12 @@ def main():
     parser.add_argument('hosts', type=str, help='Comma-separated host names (e.g., c0,c1,c2)')
     parser.add_argument('--output_dir', type=str, default='thesis_advanced_graphs',
                         help='Where to store generated PNGs (default: thesis_advanced_graphs)')
+    parser.add_argument('--group_name', type=str, help='unique name for group of sessions being averaged')
 
     args = parser.parse_args()
     hosts = args.hosts.split(',')
     session_names = args.session_names.split(',')
-    plot_graphs(session_names, hosts, args.output_dir)
+    plot_graphs(session_names, hosts, args.output_dir, args.group_name)
 
 
 if __name__ == "__main__":
