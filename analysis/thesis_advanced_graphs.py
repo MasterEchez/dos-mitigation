@@ -36,6 +36,8 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
 
     for (i, experiments) in enumerate(zip(*experiments_all)):
         print(experiments)
+        out_dir = os.path.join(output_dir, group_name, str(i))
+        os.makedirs(out_dir, exist_ok=True)
         # Copy .settings file
         settings_path = os.path.join(experiments[0], ".settings")
         if os.path.isfile(settings_path):
