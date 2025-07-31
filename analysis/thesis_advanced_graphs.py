@@ -105,30 +105,44 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                     # y_view_max = float('-inf')
                     # y_view_min = float('inf')
                     for scenario, group in merged_df.groupby('scenario'):
-                        # individual_axes = individual_figures[scenario].add_subplot(1,1,1)
-                        # averaged = group.resample(datetime.timedelta(seconds=0.5)).mean()
+                        individual_axes = individual_figures[scenario].add_subplot(1,1,1)
 
-                        # if 'jitsi_packetloss' in col:
-                        #     individual_axes.set_ylim(0,100.5)
-                        #     individual_axes.set_ylabel(col + " (percent)")
-                        # else:
-                        #     y_view_min = min(0,group[col].min())
-                        #     y_view_max = group[col].max()
-                        #     diff = y_view_max - y_view_min
-                        #     individual_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
-                        #     individual_axes.set_ylabel(col)
+                        group_copy = group.copy()
+                        group_copy['relative_time'] = pd.to_timedelta(group_copy['relative_time'], unit='s')
+                        group_copy = group_copy.set_index('relative_time')
+                        averaged = group_copy[col].resample('500ms').mean()
 
-                        # individual_axes.set_xlabel('time from experiment start')
-                        # individual_axes.set_ylabel(col)
-                        # individual_axes.set_title(f'Average {col} \nHost: {host}')
-                        # individual_figures[scenario].tight_layout()
+                        averaged.index = averaged.index.total_seconds()
                         
-                        # average_scenario_dir = os.path.join(out_dir, host, scenario)
-                        # os.makedirs(average_scenario_dir, exist_ok=True)
-                        # output_path = os.path.join(average_scenario_dir, f"{col}.png")
-                        # individual_figures[scenario].savefig(output_path)
+                        averaged.plot(ax=individual_axes)
+
+                        if 'jitsi_packetloss' in col:
+                            individual_axes.set_ylim(0,100.5)
+                            individual_axes.set_ylabel(col + " (percent)")
+                        else:
+                            y_view_min = min(0,averaged.min())
+                            y_view_max = averaged.max()
+                            diff = y_view_max - y_view_min
+                            individual_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
+                            individual_axes.set_ylabel(col)
+
+                        individual_axes.set_xlabel('time from experiment start')
+                        individual_axes.xaxis.set_major_formatter(mticker.FuncFormatter(format_seconds_to_mm_ss))
+                        individual_axes.set_xlim(0, 45)
+                        x1_3 = 15
+                        x2_3 = 30
+                        individual_axes.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
+                        individual_axes.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
+                        individual_axes.set_ylabel(col)
+                        individual_axes.set_title(f'Average {col} \nHost: {host}')
+                        individual_figures[scenario].tight_layout()
+                        
+                        average_scenario_dir = os.path.join(out_dir, host, scenario)
+                        os.makedirs(average_scenario_dir, exist_ok=True)
+                        output_path = os.path.join(average_scenario_dir, f"{col}.png")
+                        individual_figures[scenario].savefig(output_path)
                         plt.close(individual_figures[scenario])
-                        # print(f"Saved: {output_path}")
+                        print(f"Saved: {output_path}")
                         
                     #     cons_scen_axes.plot(group['relative_time'], group[col], label=scenario)
                     #     # cons_scen_axes = cons_scen_axes.gca()
