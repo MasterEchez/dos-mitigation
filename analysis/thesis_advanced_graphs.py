@@ -97,13 +97,13 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                         scenario: plt.figure(figsize=(10,6)) for scenario in scenarios
                     }
 
-                    # cons_scen_figure = plt.figure(figsize=(10,6))
-                    # cons_scen_axes = cons_scen_figure.add_subplot(1, 1, 1)
+                    cons_scen_figure = plt.figure(figsize=(10,6))
+                    cons_scen_axes = cons_scen_figure.add_subplot(1, 1, 1)
                     qos_figure = plt.figure(figsize=(10,6))
                     qos_axes = qos_figure.add_subplot(1, 1, 1)
                     
-                    # y_view_max = float('-inf')
-                    # y_view_min = float('inf')
+                    cons_scen_y_view_max = float('-inf')
+                    cons_scen_y_view_min = float('inf')
                     for scenario, group in merged_df.groupby('scenario'):
                         individual_axes = individual_figures[scenario].add_subplot(1,1,1)
 
@@ -115,6 +115,17 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                         averaged.index = averaged.index.total_seconds()
                         
                         averaged.plot(ax=individual_axes)
+                        averaged.plot(ax=cons_scen_axes, label=scenario)
+                        
+                        if 'jitsi_packetloss' in col:
+                            cons_scen_axes.set_ylim(0,100.5)
+                            cons_scen_axes.set_ylabel(col + " (percent)")
+                        else:
+                            cons_scen_y_view_min = min(0,averaged.min(), cons_scen_y_view_min)
+                            cons_scen_y_view_max = max(averaged.max(), cons_scen_y_view_max)
+                            diff = cons_scen_y_view_max - cons_scen_y_view_min
+                            cons_scen_axes.set_ylim((cons_scen_y_view_min - 0.1*diff, cons_scen_y_view_max + 0.1*diff))
+                            cons_scen_axes.set_ylabel(col)
 
                         if 'jitsi_packetloss' in col:
                             individual_axes.set_ylim(0,100.5)
@@ -133,7 +144,6 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                         x2_3 = 30
                         individual_axes.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
                         individual_axes.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
-                        individual_axes.set_ylabel(col)
                         individual_axes.set_title(f'Average {col} \nHost: {host}')
                         individual_figures[scenario].tight_layout()
                         
@@ -144,29 +154,25 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                         plt.close(individual_figures[scenario])
                         print(f"Saved: {output_path}")
                         
-                    #     cons_scen_axes.plot(group['relative_time'], group[col], label=scenario)
-                    #     # cons_scen_axes = cons_scen_axes.gca()
-                    #     if 'jitsi_packetloss' in col:
-                    #         cons_scen_axes.set_ylim(0,100.5)
-                    #         cons_scen_axes.set_ylabel(col + " (percent)")
-                    #     else:
-                    #         y_view_min = min(0,group[col].min(), y_view_min)
-                    #         y_view_max = max(group[col].max(), y_view_max)
-                    #         diff = y_view_max - y_view_min
-                    #         cons_scen_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
-                    #         cons_scen_axes.set_ylabel(col)
 
-                    # cons_scen_axes.set_xlabel('time from experiment start')
-                    # cons_scen_axes.set_title(f'Average {col} across scenarios \nHost: {host}')
-                    # cons_scen_axes.legend()
-                    # cons_scen_figure.tight_layout()
+
+                    cons_scen_axes.set_xlabel('time from experiment start')
+                    cons_scen_axes.xaxis.set_major_formatter(mticker.FuncFormatter(format_seconds_to_mm_ss))
+                    cons_scen_axes.set_xlim(0, 45)
+                    x1_3 = 15
+                    x2_3 = 30
+                    cons_scen_axes.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
+                    cons_scen_axes.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
+                    cons_scen_axes.set_title(f'Average {col} across scenarios \nHost: {host}')
+                    cons_scen_axes.legend()
+                    cons_scen_figure.tight_layout()
                     
-                    # cons_scen_host_dir = os.path.join(out_dir, "4_scenarios", host)
-                    # os.makedirs(cons_scen_host_dir, exist_ok=True)
-                    # output_path = os.path.join(cons_scen_host_dir, f"{col}.png")
-                    # cons_scen_figure.savefig(output_path)
-                    # plt.close(cons_scen_figure)
-                    # print(f"Saved: {output_path}")
+                    cons_scen_host_dir = os.path.join(out_dir, "4_scenarios", host)
+                    os.makedirs(cons_scen_host_dir, exist_ok=True)
+                    output_path = os.path.join(cons_scen_host_dir, f"{col}.png")
+                    cons_scen_figure.savefig(output_path)
+                    plt.close(cons_scen_figure)
+                    print(f"Saved: {output_path}")
                     
                     outfile.write(f"window 2 average value for {col}:\n")
                     values = {
