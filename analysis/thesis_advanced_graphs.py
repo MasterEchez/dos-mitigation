@@ -85,88 +85,96 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
             mask = (merged_df['relative_time']>= 15) & (merged_df['relative_time'] <= 30)
             filtered_df = merged_df[mask]
 
+            average_scenario_dir = os.path.join(out_dir, "qos", host)
+            os.makedirs(average_scenario_dir, exist_ok=True)
+            with open(os.path.join(average_scenario_dir, "averages.txt"), "w") as outfile:
+                for col in merged_df.columns:
+                    if col in ['timestamp', 'relative_time', 'scenario']:
+                        continue
 
-            for col in merged_df.columns:
-                if col in ['timestamp', 'relative_time', 'scenario']:
-                    continue
+                    individual_figures = {
+                        scenario: plt.figure(figsize=(10,6)) for scenario in scenarios
+                    }
 
-                individual_figures = {
-                    scenario: plt.figure(figsize=(10,6)) for scenario in scenarios
-                }
-
-                # cons_scen_figure = plt.figure(figsize=(10,6))
-                # cons_scen_axes = cons_scen_figure.add_subplot(1, 1, 1)
-                qos_figure = plt.figure(figsize=(10,6))
-                qos_axes = qos_figure.add_subplot(1, 1, 1)
-                
-                # y_view_max = float('-inf')
-                # y_view_min = float('inf')
-                for scenario, group in merged_df.groupby('scenario'):
-                #     individual_axes = individual_figures[scenario].add_subplot(1,1,1)
-
-                #     if 'jitsi_packetloss' in col:
-                #         individual_axes.set_ylim(0,100.5)
-                #         individual_axes.set_ylabel(col + " (percent)")
-                #     else:
-                #         y_view_min = min(0,group[col].min())
-                #         y_view_max = group[col].max()
-                #         diff = y_view_max - y_view_min
-                #         individual_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
-                #         individual_axes.set_ylabel(col)
-
-                #     individual_axes.set_xlabel('time from experiment start')
-                #     individual_axes.set_ylabel(col)
-                #     individual_axes.set_title(f'Average {col} across experiments \nHost: {host}')
-                #     individual_figures[scenario].tight_layout()
+                    # cons_scen_figure = plt.figure(figsize=(10,6))
+                    # cons_scen_axes = cons_scen_figure.add_subplot(1, 1, 1)
+                    qos_figure = plt.figure(figsize=(10,6))
+                    qos_axes = qos_figure.add_subplot(1, 1, 1)
                     
-                #     average_scenario_dir = os.path.join(out_dir, host, scenario)
-                #     os.makedirs(average_scenario_dir, exist_ok=True)
-                #     output_path = os.path.join(average_scenario_dir, f"{col}.png")
-                #     individual_figures[scenario].savefig(output_path)
-                    plt.close(individual_figures[scenario])
-                #     print(f"Saved: {output_path}")
-                #     cons_scen_axes.plot(group['relative_time'], group[col], label=scenario)
-                #     # cons_scen_axes = cons_scen_axes.gca()
-                #     if 'jitsi_packetloss' in col:
-                #         cons_scen_axes.set_ylim(0,100.5)
-                #         cons_scen_axes.set_ylabel(col + " (percent)")
-                #     else:
-                #         y_view_min = min(0,group[col].min(), y_view_min)
-                #         y_view_max = max(group[col].max(), y_view_max)
-                #         diff = y_view_max - y_view_min
-                #         cons_scen_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
-                #         cons_scen_axes.set_ylabel(col)
+                    # y_view_max = float('-inf')
+                    # y_view_min = float('inf')
+                    for scenario, group in merged_df.groupby('scenario'):
+                    #     individual_axes = individual_figures[scenario].add_subplot(1,1,1)
 
-                # cons_scen_axes.set_xlabel('time from experiment start')
-                # cons_scen_axes.set_title(f'Average {col} across scenarios \nHost: {host}')
-                # cons_scen_axes.legend()
-                # cons_scen_figure.tight_layout()
-                
-                # cons_scen_host_dir = os.path.join(out_dir, "4_scenarios", host)
-                # os.makedirs(cons_scen_host_dir, exist_ok=True)
-                # output_path = os.path.join(cons_scen_host_dir, f"{col}.png")
-                # cons_scen_figure.savefig(output_path)
-                # plt.close(cons_scen_figure)
-                # print(f"Saved: {output_path}")
-                
-                col_average = filtered_df.groupby('scenario')[col].mean().reindex(scenarios)
+                    #     if 'jitsi_packetloss' in col:
+                    #         individual_axes.set_ylim(0,100.5)
+                    #         individual_axes.set_ylabel(col + " (percent)")
+                    #     else:
+                    #         y_view_min = min(0,group[col].min())
+                    #         y_view_max = group[col].max()
+                    #         diff = y_view_max - y_view_min
+                    #         individual_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
+                    #         individual_axes.set_ylabel(col)
 
-                indexes = col_average.index
-                averages = col_average.values
+                    #     individual_axes.set_xlabel('time from experiment start')
+                    #     individual_axes.set_ylabel(col)
+                    #     individual_axes.set_title(f'Average {col} across experiments \nHost: {host}')
+                    #     individual_figures[scenario].tight_layout()
+                        
+                    #     average_scenario_dir = os.path.join(out_dir, host, scenario)
+                    #     os.makedirs(average_scenario_dir, exist_ok=True)
+                    #     output_path = os.path.join(average_scenario_dir, f"{col}.png")
+                    #     individual_figures[scenario].savefig(output_path)
+                        plt.close(individual_figures[scenario])
+                    #     print(f"Saved: {output_path}")
+                    #     cons_scen_axes.plot(group['relative_time'], group[col], label=scenario)
+                    #     # cons_scen_axes = cons_scen_axes.gca()
+                    #     if 'jitsi_packetloss' in col:
+                    #         cons_scen_axes.set_ylim(0,100.5)
+                    #         cons_scen_axes.set_ylabel(col + " (percent)")
+                    #     else:
+                    #         y_view_min = min(0,group[col].min(), y_view_min)
+                    #         y_view_max = max(group[col].max(), y_view_max)
+                    #         diff = y_view_max - y_view_min
+                    #         cons_scen_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
+                    #         cons_scen_axes.set_ylabel(col)
 
-                qos_axes.bar(indexes, averages, color=['green', 'skyblue', 'lightcoral', 'yellow'])
-                qos_axes.set_xlabel('Scenario')
-                qos_axes.set_ylabel('QoS')
-                qos_axes.set_title(f'Window 2 average {col} across experiments \nHost: {host}')
-                qos_axes.grid(axis='y', linestyle='--', alpha=0.7)
-                qos_figure.tight_layout()
-                
-                average_scenario_dir = os.path.join(out_dir, "qos", host)
-                os.makedirs(average_scenario_dir, exist_ok=True)
-                output_path = os.path.join(average_scenario_dir, f"{col}.png")
-                qos_figure.savefig(output_path)
-                plt.close(qos_figure)
-                print(f"Saved: {output_path}")
+                    # cons_scen_axes.set_xlabel('time from experiment start')
+                    # cons_scen_axes.set_title(f'Average {col} across scenarios \nHost: {host}')
+                    # cons_scen_axes.legend()
+                    # cons_scen_figure.tight_layout()
+                    
+                    # cons_scen_host_dir = os.path.join(out_dir, "4_scenarios", host)
+                    # os.makedirs(cons_scen_host_dir, exist_ok=True)
+                    # output_path = os.path.join(cons_scen_host_dir, f"{col}.png")
+                    # cons_scen_figure.savefig(output_path)
+                    # plt.close(cons_scen_figure)
+                    # print(f"Saved: {output_path}")
+                    
+                    outfile.write(f"window 2 average value for {col}:\n")
+                    values = {
+                        scenario: group[col].mean() for scenario, group in filtered_df.groupby('scenario')
+                    }
+                    for scenario in scenarios:
+                        outfile.write(f"{scenario}: {values[scenario]}\n")
+                    outfile.write("\n")
+
+                    col_average = filtered_df.groupby('scenario')[col].mean().reindex(scenarios)
+
+                    indexes = col_average.index
+                    averages = col_average.values
+
+                    qos_axes.bar(indexes, averages, color=['green', 'skyblue', 'lightcoral', 'yellow'])
+                    qos_axes.set_xlabel('Scenario')
+                    qos_axes.set_ylabel('QoS')
+                    qos_axes.set_title(f'Window 2 average {col} across experiments \nHost: {host}')
+                    qos_axes.grid(axis='y', linestyle='--', alpha=0.7)
+                    qos_figure.tight_layout()
+                    
+                    output_path = os.path.join(average_scenario_dir, f"{col}.png")
+                    qos_figure.savefig(output_path)
+                    plt.close(qos_figure)
+                    print(f"Saved: {output_path}")
 
 
 def main():
