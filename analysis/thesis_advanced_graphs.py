@@ -86,9 +86,9 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
             mask = (merged_df['relative_time']>= 15) & (merged_df['relative_time'] <= 30)
             filtered_df = merged_df[mask]
 
-            average_scenario_dir = os.path.join(out_dir, "qos", host)
-            os.makedirs(average_scenario_dir, exist_ok=True)
-            with open(os.path.join(average_scenario_dir, "averages.txt"), "w") as outfile:
+            qos_host_dir = os.path.join(out_dir, "qos", host)
+            os.makedirs(qos_host_dir, exist_ok=True)
+            with open(os.path.join(qos_host_dir, "averages.txt"), "w") as outfile:
                 for col in merged_df.columns:
                     if col in ['timestamp', 'relative_time', 'scenario']:
                         continue
@@ -189,12 +189,12 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
 
                     qos_axes.bar(indexes, averages, color=scenario_colors)
                     qos_axes.set_xlabel('Scenario')
-                    qos_axes.set_ylabel('QoS')
+                    qos_axes.set_ylabel(col)
                     # qos_axes.set_title(f'Window 2 average {col} across experiments \nHost: {host}')
                     qos_axes.grid(axis='y', linestyle='--', alpha=0.7)
                     qos_figure.tight_layout()
                     
-                    output_path = os.path.join(average_scenario_dir, f"{col}.png")
+                    output_path = os.path.join(qos_host_dir, f"{col}.png")
                     qos_figure.savefig(output_path)
                     plt.close(qos_figure)
                     print(f"Saved: {output_path}")
