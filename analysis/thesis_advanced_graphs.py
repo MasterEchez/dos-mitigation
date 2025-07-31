@@ -24,6 +24,7 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                 if os.path.isdir(os.path.join(session_path, exp))])
                 for session_path in session_paths]
     scenarios = ['UB', 'MB', 'UA', 'MA']
+    scenario_colors = ['#7aa755', '#4f71be', '#b02418', '#f6c242']
 
     # print(experiments_all)
 
@@ -104,29 +105,31 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                     # y_view_max = float('-inf')
                     # y_view_min = float('inf')
                     for scenario, group in merged_df.groupby('scenario'):
-                    #     individual_axes = individual_figures[scenario].add_subplot(1,1,1)
+                        # individual_axes = individual_figures[scenario].add_subplot(1,1,1)
+                        # averaged = group.resample(datetime.timedelta(seconds=0.5)).mean()
 
-                    #     if 'jitsi_packetloss' in col:
-                    #         individual_axes.set_ylim(0,100.5)
-                    #         individual_axes.set_ylabel(col + " (percent)")
-                    #     else:
-                    #         y_view_min = min(0,group[col].min())
-                    #         y_view_max = group[col].max()
-                    #         diff = y_view_max - y_view_min
-                    #         individual_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
-                    #         individual_axes.set_ylabel(col)
+                        # if 'jitsi_packetloss' in col:
+                        #     individual_axes.set_ylim(0,100.5)
+                        #     individual_axes.set_ylabel(col + " (percent)")
+                        # else:
+                        #     y_view_min = min(0,group[col].min())
+                        #     y_view_max = group[col].max()
+                        #     diff = y_view_max - y_view_min
+                        #     individual_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
+                        #     individual_axes.set_ylabel(col)
 
-                    #     individual_axes.set_xlabel('time from experiment start')
-                    #     individual_axes.set_ylabel(col)
-                    #     individual_axes.set_title(f'Average {col} across experiments \nHost: {host}')
-                    #     individual_figures[scenario].tight_layout()
+                        # individual_axes.set_xlabel('time from experiment start')
+                        # individual_axes.set_ylabel(col)
+                        # individual_axes.set_title(f'Average {col} \nHost: {host}')
+                        # individual_figures[scenario].tight_layout()
                         
-                    #     average_scenario_dir = os.path.join(out_dir, host, scenario)
-                    #     os.makedirs(average_scenario_dir, exist_ok=True)
-                    #     output_path = os.path.join(average_scenario_dir, f"{col}.png")
-                    #     individual_figures[scenario].savefig(output_path)
+                        # average_scenario_dir = os.path.join(out_dir, host, scenario)
+                        # os.makedirs(average_scenario_dir, exist_ok=True)
+                        # output_path = os.path.join(average_scenario_dir, f"{col}.png")
+                        # individual_figures[scenario].savefig(output_path)
                         plt.close(individual_figures[scenario])
-                    #     print(f"Saved: {output_path}")
+                        # print(f"Saved: {output_path}")
+                        
                     #     cons_scen_axes.plot(group['relative_time'], group[col], label=scenario)
                     #     # cons_scen_axes = cons_scen_axes.gca()
                     #     if 'jitsi_packetloss' in col:
@@ -164,7 +167,7 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                     indexes = col_average.index
                     averages = col_average.values
 
-                    qos_axes.bar(indexes, averages, color=['green', 'skyblue', 'lightcoral', 'yellow'])
+                    qos_axes.bar(indexes, averages, color=scenario_colors)
                     qos_axes.set_xlabel('Scenario')
                     qos_axes.set_ylabel('QoS')
                     qos_axes.set_title(f'Window 2 average {col} across experiments \nHost: {host}')
