@@ -116,7 +116,7 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                         
                         averaged.plot(ax=individual_axes)
                         averaged.plot(ax=cons_scen_axes, label=scenario)
-                        
+
                         if 'jitsi_packetloss' in col:
                             cons_scen_axes.set_ylim(0,100.5)
                             cons_scen_axes.set_ylabel(col + " (percent)")
@@ -144,7 +144,7 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                         x2_3 = 30
                         individual_axes.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
                         individual_axes.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
-                        individual_axes.set_title(f'Average {col} \nHost: {host}')
+                        # individual_axes.set_title(f'Average {col} \nHost: {host}')
                         individual_figures[scenario].tight_layout()
                         
                         average_scenario_dir = os.path.join(out_dir, host, scenario)
@@ -163,7 +163,7 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                     x2_3 = 30
                     cons_scen_axes.axvline(x=x1_3, color='red', linestyle='--', linewidth=1)
                     cons_scen_axes.axvline(x=x2_3, color='blue', linestyle='--', linewidth=1)
-                    cons_scen_axes.set_title(f'Average {col} across scenarios \nHost: {host}')
+                    # cons_scen_axes.set_title(f'Average {col} across scenarios \nHost: {host}')
                     cons_scen_axes.legend()
                     cons_scen_figure.tight_layout()
                     
@@ -190,7 +190,7 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                     qos_axes.bar(indexes, averages, color=scenario_colors)
                     qos_axes.set_xlabel('Scenario')
                     qos_axes.set_ylabel('QoS')
-                    qos_axes.set_title(f'Window 2 average {col} across experiments \nHost: {host}')
+                    # qos_axes.set_title(f'Window 2 average {col} across experiments \nHost: {host}')
                     qos_axes.grid(axis='y', linestyle='--', alpha=0.7)
                     qos_figure.tight_layout()
                     

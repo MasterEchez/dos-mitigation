@@ -89,7 +89,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                                 ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
                                 plt.ylabel(col)
                         plt.xlabel('time from experiment start')
-                        plt.title(f'{col} across hosts\nScenario: {scenario} - experiment: {experiment}')
+                        # plt.title(f'{col} across hosts\nScenario: {scenario} - experiment: {experiment}')
                         plt.legend()
                         plt.xticks(rotation=45)
                         ax = plt.gca()
@@ -159,7 +159,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                                 plt.ylabel(col)
 
                         plt.xlabel('time from experiment start')
-                        plt.title(f'{col} across scenarios \nHost: {host} - experiment: {experiment}')
+                        # plt.title(f'{col} across scenarios \nHost: {host} - experiment: {experiment}')
                         plt.legend()
                         ax = plt.gca()
                         ax.xaxis.set_major_formatter(mticker.FuncFormatter(format_seconds_to_mm_ss))
@@ -207,7 +207,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             plt.plot(df['timestamp_from_start'], df[col], label=col)
                             plt.xlabel('time from experiment start')
                             plt.ylabel(col)
-                            plt.title(f'{col} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
+                            # plt.title(f'{col} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                             plt.xticks(rotation=45)
 
                             ax = plt.gca()
@@ -249,7 +249,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             plt.xlabel('time from experiment start')
                             plt.ylabel(name)
                             plt.legend()
-                            plt.title(f'{name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
+                            # plt.title(f'{name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                             plt.xticks(rotation=45)
 
                             ax = plt.gca()
@@ -280,7 +280,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             plt.xlabel('time from experiment start')
                             plt.ylabel(name)
                             plt.legend()
-                            plt.title(f'Upload minus Download {name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
+                            # plt.title(f'Upload minus Download {name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                             plt.xticks(rotation=45)
 
                             ax = plt.gca()
