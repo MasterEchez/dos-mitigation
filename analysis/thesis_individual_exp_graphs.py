@@ -6,6 +6,8 @@ import matplotlib.ticker as mticker
 import argparse
 import datetime
 
+plt.rcParams.update({'font.size': 16}) # Sets the default font size to 16
+
 def format_seconds_to_mm_ss(x, pos):
     minutes = int(x // 60)
     seconds = int(x % 60)
