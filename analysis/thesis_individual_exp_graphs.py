@@ -88,7 +88,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                                 diff = y_view_max - y_view_min
                                 ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
                                 plt.ylabel(col)
-                        plt.xlabel('time from experiment start')
+                        plt.xlabel('time elapsed from experiment start')
                         # plt.title(f'{col} across hosts\nScenario: {scenario} - experiment: {experiment}')
                         plt.legend()
                         plt.xticks(rotation=45)
@@ -158,7 +158,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                                 ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
                                 plt.ylabel(col)
 
-                        plt.xlabel('time from experiment start')
+                        plt.xlabel('time elapsed from experiment start (seconds)')
                         # plt.title(f'{col} across scenarios \nHost: {host} - experiment: {experiment}')
                         plt.legend()
                         ax = plt.gca()
@@ -205,7 +205,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
 
                             plt.figure(figsize=(10, 6))
                             plt.plot(df['timestamp_from_start'], df[col], label=col)
-                            plt.xlabel('time from experiment start')
+                            plt.xlabel('time elapsed from experiment start (seconds)')
                             plt.ylabel(col)
                             # plt.title(f'{col} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                             plt.xticks(rotation=45)
@@ -246,7 +246,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             plt.figure(figsize=(10, 6))
                             plt.plot(df['timestamp_from_start'], df[upload], label=upload)
                             plt.plot(df['timestamp_from_start'], df[download], label=download)
-                            plt.xlabel('time from experiment start')
+                            plt.xlabel('time elapsed from experiment start (seconds)')
                             plt.ylabel(name)
                             plt.legend()
                             # plt.title(f'{name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
@@ -277,7 +277,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
 
                             plt.figure(figsize=(10, 6))
                             plt.plot(df['timestamp_from_start'], df[upload] - df[download], label=f"{name}_diff")
-                            plt.xlabel('time from experiment start')
+                            plt.xlabel('time elapsed from experiment start (seconds)')
                             plt.ylabel(name)
                             plt.legend()
                             # plt.title(f'Upload minus Download {name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')

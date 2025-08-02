@@ -137,7 +137,7 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                             individual_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
                             individual_axes.set_ylabel(col)
 
-                        individual_axes.set_xlabel('time from experiment start')
+                        individual_axes.set_xlabel('time elapsed from experiment start (seconds)')
                         individual_axes.xaxis.set_major_formatter(mticker.FuncFormatter(format_seconds_to_mm_ss))
                         individual_axes.set_xlim(0, 45)
                         x1_3 = 15
@@ -156,7 +156,7 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                         
 
 
-                    cons_scen_axes.set_xlabel('time from experiment start')
+                    cons_scen_axes.set_xlabel('time elapsed from experiment start (seconds)')
                     cons_scen_axes.xaxis.set_major_formatter(mticker.FuncFormatter(format_seconds_to_mm_ss))
                     cons_scen_axes.set_xlim(0, 45)
                     x1_3 = 15
