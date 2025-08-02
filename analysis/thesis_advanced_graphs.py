@@ -11,6 +11,17 @@ def format_seconds_to_mm_ss(x, pos):
     seconds = int(x % 60)
     return f"{minutes:02d}:{seconds:02d}"
 
+def graph_y_label(col):
+    if "bitrate" in col:
+        return col + " (kilobits per second)"
+    if "jvb_rtt" in col:
+        return col + " (seconds)"
+    if "packetloss" in col:
+        return col + " (percent)"
+    if "rtc_framesPerSecond_download" in col:
+        return "Client video framerate (frames per second)"
+    return col
+
 def plot_graphs(session_names, hosts, output_dir, group_name):
     root_dir = "/usr/local/dos-mitigation/data"
     session_paths = [ os.path.join(root_dir, session_name) for session_name in session_names]
@@ -119,23 +130,23 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
 
                         if 'jitsi_packetloss' in col:
                             cons_scen_axes.set_ylim(0,100.5)
-                            cons_scen_axes.set_ylabel(col + " (percent)")
+                            cons_scen_axes.set_ylabel(graph_y_label(col))
                         else:
                             cons_scen_y_view_min = min(0,averaged.min(), cons_scen_y_view_min)
                             cons_scen_y_view_max = max(averaged.max(), cons_scen_y_view_max)
                             diff = cons_scen_y_view_max - cons_scen_y_view_min
                             cons_scen_axes.set_ylim((cons_scen_y_view_min - 0.1*diff, cons_scen_y_view_max + 0.1*diff))
-                            cons_scen_axes.set_ylabel(col)
+                            cons_scen_axes.set_ylabel(graph_y_label(col))
 
                         if 'jitsi_packetloss' in col:
                             individual_axes.set_ylim(0,100.5)
-                            individual_axes.set_ylabel(col + " (percent)")
+                            individual_axes.set_ylabel(graph_y_label(col))
                         else:
                             y_view_min = min(0,averaged.min())
                             y_view_max = averaged.max()
                             diff = y_view_max - y_view_min
                             individual_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
-                            individual_axes.set_ylabel(col)
+                            individual_axes.set_ylabel(graph_y_label(col))
 
                         individual_axes.set_xlabel('time elapsed from experiment start (seconds)')
                         # individual_axes.xaxis.set_major_formatter(mticker.FuncFormatter(format_seconds_to_mm_ss))
@@ -189,7 +200,7 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
 
                     qos_axes.bar(indexes, averages, color=scenario_colors)
                     qos_axes.set_xlabel('Scenario')
-                    qos_axes.set_ylabel(col)
+                    qos_axes.set_ylabel(graph_y_label(col))
                     # qos_axes.set_title(f'Window 2 average {col} across experiments \nHost: {host}')
                     qos_axes.grid(axis='y', linestyle='--', alpha=0.7)
                     qos_figure.tight_layout()

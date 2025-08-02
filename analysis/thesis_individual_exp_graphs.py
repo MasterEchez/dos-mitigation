@@ -11,6 +11,17 @@ def format_seconds_to_mm_ss(x, pos):
     seconds = int(x % 60)
     return f"{minutes:02d}:{seconds:02d}"
 
+def graph_y_label(col):
+    if "bitrate" in col:
+        return col + " (kilobits per second)"
+    if "jvb_rtt" in col:
+        return col + " (seconds)"
+    if "packetloss" in col:
+        return col + " (percent)"
+    if "rtc_framesPerSecond_download" in col:
+        return "Client video framerate (frames per second)"
+    return col
+
 def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, consolidate_scenarios=False):
     root_dir = "/usr/local/dos-mitigation/data"
     for session_name in session_names:
@@ -81,13 +92,13 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             
                             if 'jitsi_packetloss' in col:
                                 ax.set_ylim(0,100.5)
-                                plt.ylabel(col + " (percent)")
+                                plt.ylabel(graph_y_label(col))
                             else:
                                 y_view_min = min(0,group[col].min(), y_view_min)
                                 y_view_max = max(group[col].max(), y_view_max)
                                 diff = y_view_max - y_view_min
                                 ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
-                                plt.ylabel(col)
+                                plt.ylabel(graph_y_label(col))
                         plt.xlabel('time elapsed from experiment start')
                         # plt.title(f'{col} across hosts\nScenario: {scenario} - experiment: {experiment}')
                         plt.legend()
@@ -150,13 +161,13 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             ax = plt.gca()
                             if 'jitsi_packetloss' in col:
                                 ax.set_ylim(0,100.5)
-                                plt.ylabel(col + " (percent)")
+                                plt.ylabel(graph_y_label(col))
                             else:
                                 y_view_min = min(0,group[col].min(), y_view_min)
                                 y_view_max = max(group[col].max(), y_view_max)
                                 diff = y_view_max - y_view_min
                                 ax.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
-                                plt.ylabel(col)
+                                plt.ylabel(graph_y_label(col))
 
                         plt.xlabel('time elapsed from experiment start (seconds)')
                         # plt.title(f'{col} across scenarios \nHost: {host} - experiment: {experiment}')
@@ -204,9 +215,9 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                                 continue
 
                             plt.figure(figsize=(10, 6))
-                            plt.plot(df['timestamp_from_start'], df[col], label=col)
+                            plt.plot(df['timestamp_from_start'], df[col], label=graph_y_label(col))
                             plt.xlabel('time elapsed from experiment start (seconds)')
-                            plt.ylabel(col)
+                            plt.ylabel(graph_y_label(col))
                             # plt.title(f'{col} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                             plt.xticks(rotation=45)
 
@@ -214,7 +225,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             ax.xaxis.set_major_formatter(mdates.DateFormatter('%S'))
                             if 'jitsi_packetloss' in col:
                                 ax.set_ylim(0,100.5)
-                                plt.ylabel(col + " (percent)")
+                                plt.ylabel(graph_y_label(col))
                             else:
                                 y_view_min = min(0,df[col].min())
                                 y_view_max = df[col].max()
@@ -247,7 +258,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             plt.plot(df['timestamp_from_start'], df[upload], label=upload)
                             plt.plot(df['timestamp_from_start'], df[download], label=download)
                             plt.xlabel('time elapsed from experiment start (seconds)')
-                            plt.ylabel(name)
+                            plt.ylabel(graph_y_label(name))
                             plt.legend()
                             # plt.title(f'{name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                             plt.xticks(rotation=45)
@@ -276,9 +287,9 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             print(f"Saved: {output_path}")
 
                             plt.figure(figsize=(10, 6))
-                            plt.plot(df['timestamp_from_start'], df[upload] - df[download], label=f"{name}_diff")
+                            plt.plot(df['timestamp_from_start'], df[upload] - df[download], label=graph_y_label(f"{name}_diff"))
                             plt.xlabel('time elapsed from experiment start (seconds)')
-                            plt.ylabel(name)
+                            plt.ylabel(graph_y_label(f"{name}_diff"))
                             plt.legend()
                             # plt.title(f'Upload minus Download {name} vs time\nHost: {host} - Scenario: {scenario} - experiment: {experiment}')
                             plt.xticks(rotation=45)
