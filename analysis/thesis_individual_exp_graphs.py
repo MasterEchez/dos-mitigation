@@ -93,7 +93,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                         plt.legend()
                         plt.xticks(rotation=45)
                         ax = plt.gca()
-                        ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
+                        ax.xaxis.set_major_formatter(mdates.DateFormatter('%S'))
                         plt.tight_layout()
 
                         out_dir = os.path.join(output_dir, session_name, experiment, f"hosts_{"_".join(hosts)}", scenario)
@@ -162,7 +162,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                         # plt.title(f'{col} across scenarios \nHost: {host} - experiment: {experiment}')
                         plt.legend()
                         ax = plt.gca()
-                        ax.xaxis.set_major_formatter(mticker.FuncFormatter(format_seconds_to_mm_ss))
+                        # ax.xaxis.set_major_formatter(mticker.FuncFormatter(format_seconds_to_mm_ss))
                         xlims = plt.xlim()
                         x1_3 = 15 # secs
                         x2_3 = 30 # secs
@@ -211,7 +211,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             plt.xticks(rotation=45)
 
                             ax = plt.gca()
-                            ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
+                            ax.xaxis.set_major_formatter(mdates.DateFormatter('%S'))
                             if 'jitsi_packetloss' in col:
                                 ax.set_ylim(0,100.5)
                                 plt.ylabel(col + " (percent)")
@@ -253,7 +253,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             plt.xticks(rotation=45)
 
                             ax = plt.gca()
-                            ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
+                            ax.xaxis.set_major_formatter(mdates.DateFormatter('%S'))
                             y_view_min = min(0,df[upload].min(), df[download].min())
                             y_view_max = max(df[upload].max(), df[download].max())
                             diff = y_view_max - y_view_min
@@ -284,7 +284,7 @@ def plot_graphs(session_names, hosts, output_dir, consolidate_hosts=False, conso
                             plt.xticks(rotation=45)
 
                             ax = plt.gca()
-                            ax.xaxis.set_major_formatter(mdates.DateFormatter('%M:%S'))
+                            ax.xaxis.set_major_formatter(mdates.DateFormatter('%S'))
                             y_view_min = min(0,(df[upload] - df[download]).min())
                             y_view_max = max(0, (df[upload] - df[download]).max())
                             diff = y_view_max - y_view_min
