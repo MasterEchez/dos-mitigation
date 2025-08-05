@@ -65,6 +65,8 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
         else:
             print(f"Settings file not found: {settings_path}")
 
+        host_bitrate_df_dict = {}  # (host, exp, scenario) => df
+
         for host in hosts:
             all_data = []
             for exp in experiments:
@@ -90,6 +92,8 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                     df['relative_time'] = (df['timestamp'] - df['timestamp'].min()).dt.total_seconds()
                     df['scenario'] = scenario
                     all_data.append(df)
+
+                    host_bitrate_df_dict[(host, exp, scenario)] = df
 
                 if not all_data:
                     "empty all_data"
@@ -211,6 +215,146 @@ def plot_graphs(session_names, hosts, output_dir, group_name):
                     qos_figure.savefig(output_path)
                     plt.close(qos_figure)
                     print(f"Saved: {output_path}")
+    
+        # Now do inter-host bitrate difference calculations
+        for upload_host in hosts:
+            for download_host in hosts:
+                if upload_host == download_host:
+                    continue
+
+                all_data = []
+
+                for exp in experiments:
+                    for scenario in scenarios:
+                        upload_key = (upload_host, exp, scenario)
+                        download_key = (download_host, exp, scenario)
+
+                        if upload_key not in host_bitrate_df_dict or download_key not in host_bitrate_df_dict:
+                            print(f"Missing data for {upload_key} or {download_key}")
+                            continue
+
+                        df_upload = host_bitrate_df_dict[upload_key].copy()
+                        df_download = host_bitrate_df_dict[download_key].copy()
+
+                        # Set both indexes to relative_time in timedelta
+                        df_upload.set_index(pd.to_timedelta(df_upload['relative_time'], unit='s'), inplace=True)
+                        df_download.set_index(pd.to_timedelta(df_download['relative_time'], unit='s'), inplace=True)
+
+                        # Resample both to same interval
+                        upload_resampled = df_upload['jitsi_bitrate_upload'].resample('500ms').mean()
+                        download_resampled = df_download['jitsi_bitrate_download'].resample('500ms').mean()
+
+                        # Align & subtract
+                        diff_series = upload_resampled - download_resampled
+                        diff_series = diff_series.dropna()
+                        diff_series.index = diff_series.index.total_seconds()
+
+                        col_name = f"{upload_host}_upload_minus_{download_host}_download"
+                        diff_df = pd.DataFrame({
+                            'relative_time': diff_series.index,
+                            col_name: diff_series.values,
+                            'scenario': scenario
+                        })
+
+                        all_data.append(diff_df)
+
+                if not all_data:
+                    print(f"No data for pair {upload_host} -> {download_host}")
+                    continue
+
+                merged_df = pd.concat(all_data)
+                mask = (merged_df['relative_time'] >= 15) & (merged_df['relative_time'] <= 30)
+                filtered_df = merged_df[mask]
+
+                # Plotting & output
+                out_pair_dir = os.path.join(out_dir, "upload_vs_download", f"{upload_host}_minus_{download_host}")
+                os.makedirs(out_pair_dir, exist_ok=True)
+                # with open(os.path.join(out_pair_dir, "averages.txt"), "w") as outfile:
+                for col in merged_df.columns:
+                    if col != f"{upload_host}_upload_minus_{download_host}_download":
+                        continue
+
+                    individual_figures = {
+                        scenario: plt.figure(figsize=(10,6)) for scenario in scenarios
+                    }
+
+                    cons_scen_figure = plt.figure(figsize=(10,6))
+                    cons_scen_axes = cons_scen_figure.add_subplot(1, 1, 1)
+                    # qos_figure = plt.figure(figsize=(10,6))
+                    # qos_axes = qos_figure.add_subplot(1, 1, 1)
+
+                    cons_scen_y_view_max = float('-inf')
+                    cons_scen_y_view_min = float('inf')
+                    for scenario, group in merged_df.groupby('scenario'):
+                        individual_axes = individual_figures[scenario].add_subplot(1,1,1)
+
+                        group_copy = group.copy()
+                        group_copy['relative_time'] = pd.to_timedelta(group_copy['relative_time'], unit='s')
+                        group_copy = group_copy.set_index('relative_time')
+                        averaged = group_copy[col].resample('500ms').mean()
+                        averaged.index = averaged.index.total_seconds()
+
+                        averaged.plot(ax=individual_axes)
+                        averaged.plot(ax=cons_scen_axes, label=scenario)
+
+                        y_view_min = min(0, averaged.min())
+                        y_view_max = averaged.max()
+                        diff = y_view_max - y_view_min
+
+                        individual_axes.set_ylim((y_view_min - 0.1*diff, y_view_max + 0.1*diff))
+                        individual_axes.set_ylabel(f"{upload_host} upload - {download_host} download (kbps)")
+                        individual_axes.set_xlabel('time elapsed from experiment start (seconds)')
+                        individual_axes.set_xlim(0, 45)
+                        individual_axes.axvline(x=15, color='red', linestyle='--', linewidth=1)
+                        individual_axes.axvline(x=30, color='blue', linestyle='--', linewidth=1)
+                        individual_figures[scenario].tight_layout()
+
+                        scenario_dir = os.path.join(out_pair_dir, scenario)
+                        os.makedirs(scenario_dir, exist_ok=True)
+                        output_path = os.path.join(scenario_dir, f"{col}.png")
+                        individual_figures[scenario].savefig(output_path)
+                        plt.close(individual_figures[scenario])
+                        print(f"Saved: {output_path}")
+
+                        cons_scen_y_view_min = min(0, averaged.min(), cons_scen_y_view_min)
+                        cons_scen_y_view_max = max(averaged.max(), cons_scen_y_view_max)
+
+                    # Final combined plot
+                    diff = cons_scen_y_view_max - cons_scen_y_view_min
+                    cons_scen_axes.set_ylim((cons_scen_y_view_min - 0.1*diff, cons_scen_y_view_max + 0.1*diff))
+                    cons_scen_axes.set_ylabel(f"{upload_host} upload - {download_host} download (kbps)")
+                    cons_scen_axes.set_xlabel('time elapsed from experiment start (seconds)')
+                    cons_scen_axes.set_xlim(0, 45)
+                    cons_scen_axes.axvline(x=15, color='red', linestyle='--', linewidth=1)
+                    cons_scen_axes.axvline(x=30, color='blue', linestyle='--', linewidth=1)
+                    cons_scen_axes.legend()
+                    cons_scen_figure.tight_layout()
+                    output_path = os.path.join(out_pair_dir, f"{col}_all_scenarios.png")
+                    cons_scen_figure.savefig(output_path)
+                    plt.close(cons_scen_figure)
+                    print(f"Saved: {output_path}")
+
+                    # outfile.write(f"window 2 average value for {col}:\n")
+                    # values = {
+                    #     scenario: group[col].mean() for scenario, group in filtered_df.groupby('scenario')
+                    # }
+                    # for scenario in scenarios:
+                    #     outfile.write(f"{scenario}: {values[scenario]}\n")
+                    # outfile.write("\n")
+
+                    # col_average = filtered_df.groupby('scenario')[col].mean().reindex(scenarios)
+                    # indexes = col_average.index
+                    # averages = col_average.values
+                    # qos_axes.bar(indexes, averages, color=scenario_colors)
+                    # qos_axes.set_xlabel('Scenario')
+                    # qos_axes.set_ylabel(f"{upload_host} upload - {download_host} download (kbps)")
+                    # qos_axes.grid(axis='y', linestyle='--', alpha=0.7)
+                    # qos_figure.tight_layout()
+                    # output_path = os.path.join(out_pair_dir, f"{col}_bar.png")
+                    # qos_figure.savefig(output_path)
+                    # plt.close(qos_figure)
+                    # print(f"Saved: {output_path}")
+
 
 
 def main():
